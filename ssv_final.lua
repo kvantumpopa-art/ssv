@@ -41,33 +41,24 @@ local function R(p, r)
 end
 
 -- ═══════════════════════════════════════════════════════════════
---  1. УБИРАЕМ ВСТРОЕННЫЙ WATERMARK RESONANCE
+--  1. ЛУНА → PLACEHOLDER (заменяем все иконки луны на спец-строку)
+--     Луна в lucide не найдётся → иконка будет пустая
+--     Потом поверх неё накладываем нашу кастомную луну
 -- ═══════════════════════════════════════════════════════════════
-R('[^\n]*Watermark = lib:AddDraggableLabel[^\n]*\n', '-- wm removed\n')
-R('[^\n]*Watermark:SetVisible[^\n]*\n', '-- wm removed\n')
-R('[^\n]*Watermark:SetText[^\n]*\n', '-- wm removed\n')
+R('"moon%-star"', '"__SSV_MOON__"')
+R("'moon%-star'", "'__SSV_MOON__'")
+R('"moon"', '"__SSV_MOON__"')
+R("'moon'", "'__SSV_MOON__'")
 
--- ═══════════════════════════════════════════════════════════════
---  2. УБИРАЕМ ЛУНУ ВЕЗДЕ (заменяем на пустую иконку-заглушку)
--- ═══════════════════════════════════════════════════════════════
--- Убираем из AddTab (там где передаётся иконка)
-R('AddTab%("([^"]+)", "moon%-star", "([^"]*)"%)', 'AddTab("%1", "circle", "%2")')
-R('AddTab%("([^"]+)", "moon", "([^"]*)"%)', 'AddTab("%1", "circle", "%2")')
-
--- Убираем из GetIcon (lucide lookup)
-R('GetIcon%("moon%-star"%)', 'GetIcon("circle")')
-R('GetIcon%("moon"%)', 'GetIcon("circle")')
-
--- Убираем прямые ссылки
-R('"moon%-star"', '"circle"')
-R('"moon"', '"circle"')
-
--- Убираем луну из фона (если есть BackgroundImage с луной)
-R('BackgroundImage = "[^"]*moon[^"]*"', 'BackgroundImage = ""')
-R('BackgroundImage = "[^"]*Moon[^"]*"', 'BackgroundImage = ""')
+-- Убираем из BackgroundImage (если там была луна)
+R('BackgroundImage = "[^"]*[Mm]oon[^"]*"', 'BackgroundImage = ""')
 
 -- Убираем эмодзи луны из текстов
 R('🌙', '')
+R('🌚', '')
+R('🌛', '')
+R('🌜', '')
+R('🌑', '')
 R('🌒', '')
 R('🌓', '')
 R('🌔', '')
@@ -75,19 +66,15 @@ R('🌕', '')
 R('🌖', '')
 R('🌗', '')
 R('🌘', '')
-R('🌑', '')
-R('🌚', '')
-R('🌛', '')
-R('🌜', '')
 
 -- ═══════════════════════════════════════════════════════════════
---  3. AUTO-CLICKER → poses
+--  2. AUTO-CLICKER → poses
 -- ═══════════════════════════════════════════════════════════════
 R('<b>Auto%-Clicker</b>', '<b>poses</b>')
 R('"Auto%-Clicker"', '"poses"')
 
 -- ═══════════════════════════════════════════════════════════════
---  4. ЗВУК + NAME = "resonance"
+--  3. ЗВУК + NAME = "resonance"
 -- ═══════════════════════════════════════════════════════════════
 R('n34 = 97643101798871', 'n34 = 18317665126')
 R('97643101798871', '18317665126')
@@ -95,7 +82,7 @@ R('Volume = tonumber%(Data%.Volume%) or 3,', 'Name = "resonance", Volume = tonum
 R('"Player Kicked"', '"resonance"')
 
 -- ═══════════════════════════════════════════════════════════════
---  5. АВТОРЫ И НАЗВАНИЯ
+--  4. АВТОРЫ И НАЗВАНИЯ
 -- ═══════════════════════════════════════════════════════════════
 R('cracked by InLoad and wraith%.dev', 'created by qmee2')
 R('cracked by [^"]+', 'created by qmee2')
@@ -109,12 +96,12 @@ R('"Resonance %%s', '"ssv %%s')
 R('"Resonance", 79685990879972', '"ssv", 79685990879972')
 R('or "Resonance"', 'or "ssv"')
 R('AddTab%("<b>Home</b>", "house", "Profile, statistics"%)',
-  'AddTab("<b><font color=\\"#64AAFF\\">ssv</font></b>", "circle", "ssv")')
+  'AddTab("<b><font color=\\"#64AAFF\\">ssv</font></b>", "__SSV_MOON__", "ssv")')
 R('Welcome to <b><font color=\\"#fffb00\\">ssv crack</font></b>', 'Welcome to <b>ssv</b>')
 R('Welcome to <b>[^<]*</b>[^<]*', 'Welcome to <b>ssv</b>')
 R('"v2%.9"', '""')
 
--- Resonance → ssv
+-- Resonance → ssv (защита служебных)
 local pr = {"ResonanceRunning","ResonanceStarting","ResonanceOriginalFallenHeight","ResonanceRestored","ResonanceIntro"}
 local rs = {}
 for i, nm in ipairs(pr) do
@@ -128,7 +115,7 @@ src = src:gsub("Project ssv", "ssv")
 for k, nm in pairs(rs) do src = src:gsub(k, nm) end
 
 -- ═══════════════════════════════════════════════════════════════
---  6. ТЁМНО-СИНЯЯ ТЕМА
+--  5. ТЁМНО-СИНЯЯ ТЕМА
 -- ═══════════════════════════════════════════════════════════════
 R('BackgroundColor = Color3%.fromRGB%(15, 15, 15%)', 'BackgroundColor = Color3.fromRGB(4, 6, 12)')
 R('MainColor = Color3%.fromRGB%(25, 25, 25%)', 'MainColor = Color3.fromRGB(12, 16, 28)')
@@ -147,7 +134,7 @@ R('ssv%s+ssv', 'ssv')
 R('ssvssv', 'ssv')
 
 -- ═══════════════════════════════════════════════════════════════
---  7. ЗАПУСК
+--  6. ЗАПУСК
 -- ═══════════════════════════════════════════════════════════════
 local chunk, cerr = loadstring(src, "@ssv")
 if not chunk then error("[ssv] compile: " .. tostring(cerr), 0) end
@@ -155,17 +142,17 @@ local rok, rerr = pcall(chunk)
 if not rok then error("[ssv] run: " .. tostring(rerr), 0) end
 
 -- ═══════════════════════════════════════════════════════════════
---  8. КАСТОМНАЯ БЕЛАЯ ЛУНА (только на Home-иконке)
+--  7. КАСТОМНАЯ БЕЛАЯ ЛУНА (вместо placeholder-иконок)
 -- ═══════════════════════════════════════════════════════════════
 task.spawn(function()
     task.wait(5)
-    local obsidian = game:GetService("CoreGui"):FindFirstChild("Obsidian")
+    local coreGui = game:GetService("CoreGui")
+    local obsidian = coreGui:FindFirstChild("Obsidian")
     if not obsidian then return end
 
-    -- Находим иконку первой вкладки (Home/ssv — самая верхняя)
-    local targets = {}
+    -- Ищем пустые ImageLabel'ы в табах — это наши placeholder'ы
     for _, v in ipairs(obsidian:GetDescendants()) do
-        if v:IsA("ImageLabel") and v.Visible and v.AbsoluteSize.X >= 14 and v.AbsoluteSize.X <= 30 then
+        if v:IsA("ImageLabel") and v.Image == "" and v.Visible then
             local anc = v
             local is_tab = false
             for _ = 1, 5 do
@@ -173,146 +160,80 @@ task.spawn(function()
                 anc = anc.Parent
                 if anc:IsA("TextButton") then is_tab = true break end
             end
-            if is_tab then
-                table.insert(targets, v)
+
+            if is_tab and v.AbsoluteSize.X >= 10 and v.AbsoluteSize.X <= 32 then
+                local parent = v.Parent
+                if not parent then continue end
+
+                v.Visible = false
+
+                -- Контейнер луны
+                local h = Instance.new("Frame")
+                h.Name = "SSV_Luna"
+                h.Size = v.Size
+                h.Position = v.Position
+                h.AnchorPoint = v.AnchorPoint
+                h.BackgroundTransparency = 1
+                h.ZIndex = v.ZIndex
+                h.Parent = parent
+
+                -- Свечение
+                local glow = Instance.new("ImageLabel")
+                glow.Size = UDim2.fromScale(2.4, 2.4)
+                glow.Position = UDim2.fromScale(0.5, 0.5)
+                glow.AnchorPoint = Vector2.new(0.5, 0.5)
+                glow.BackgroundTransparency = 1
+                glow.Image = "rbxassetid://5028857472"
+                glow.ImageColor3 = Color3.fromRGB(200, 220, 255)
+                glow.ImageTransparency = 0.6
+                glow.ZIndex = v.ZIndex
+                glow.Parent = h
+
+                -- Сама луна (белый круг)
+                local moon = Instance.new("Frame")
+                moon.Size = UDim2.fromScale(0.92, 0.92)
+                moon.Position = UDim2.fromScale(0.5, 0.5)
+                moon.AnchorPoint = Vector2.new(0.5, 0.5)
+                moon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+                moon.BorderSizePixel = 0
+                moon.ZIndex = v.ZIndex + 2
+                moon.Parent = h
+                Instance.new("UICorner", moon).CornerRadius = UDim.new(1, 0)
+
+                -- Кратеры
+                local function crater(sz, px, py)
+                    local c = Instance.new("Frame")
+                    c.Size = UDim2.fromScale(sz, sz)
+                    c.Position = UDim2.fromScale(px, py)
+                    c.BackgroundColor3 = Color3.fromRGB(220, 230, 245)
+                    c.BorderSizePixel = 0
+                    c.ZIndex = moon.ZIndex + 1
+                    c.Parent = moon
+                    Instance.new("UICorner", c).CornerRadius = UDim.new(1, 0)
+                end
+                crater(0.2, 0.22, 0.28)
+                crater(0.13, 0.58, 0.48)
+                crater(0.09, 0.38, 0.68)
+
+                -- Полумесяц (вырезающий круг)
+                local cut = Instance.new("Frame")
+                cut.Size = UDim2.fromScale(0.85, 0.85)
+                cut.Position = UDim2.fromScale(0.62, -0.12)
+                cut.AnchorPoint = Vector2.new(0.5, 0.5)
+                cut.BackgroundColor3 = Color3.fromRGB(12, 16, 28)
+                cut.BorderSizePixel = 0
+                cut.ZIndex = moon.ZIndex + 5
+                cut.Parent = h
+                Instance.new("UICorner", cut).CornerRadius = UDim.new(1, 0)
+
+                -- Мерцание свечения
+                task.spawn(function()
+                    while h.Parent do
+                        glow.ImageTransparency = 0.5 + math.sin(tick() * 1.8) * 0.15
+                        task.wait(0.05)
+                    end
+                end)
             end
         end
     end
-    
-    table.sort(targets, function(a, b) return a.AbsolutePosition.Y < b.AbsolutePosition.Y end)
-
-    if not targets[1] then return end
-    local old = targets[1]
-    local parent = old.Parent
-    if not parent then return end
-
-    old.Visible = false
-
-    -- Контейнер для луны
-    local h = Instance.new("Frame")
-    h.Name = "SSV_Luna"
-    h.Size = old.Size
-    h.Position = old.Position
-    h.AnchorPoint = old.AnchorPoint
-    h.BackgroundTransparency = 1
-    h.ZIndex = old.ZIndex
-    h.Parent = parent
-
-    -- Свечение
-    local glow = Instance.new("ImageLabel")
-    glow.Size = UDim2.fromScale(2.6, 2.6)
-    glow.Position = UDim2.fromScale(0.5, 0.5)
-    glow.AnchorPoint = Vector2.new(0.5, 0.5)
-    glow.BackgroundTransparency = 1
-    glow.Image = "rbxassetid://5028857472"
-    glow.ImageColor3 = Color3.fromRGB(200, 220, 255)
-    glow.ImageTransparency = 0.55
-    glow.ZIndex = old.ZIndex
-    glow.Parent = h
-
-    -- Сама луна (белый круг)
-    local moon = Instance.new("Frame")
-    moon.Size = UDim2.fromScale(0.92, 0.92)
-    moon.Position = UDim2.fromScale(0.5, 0.5)
-    moon.AnchorPoint = Vector2.new(0.5, 0.5)
-    moon.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
-    moon.BorderSizePixel = 0
-    moon.ZIndex = old.ZIndex + 2
-    moon.Parent = h
-
-    local mc = Instance.new("UICorner")
-    mc.CornerRadius = UDim.new(1, 0)
-    mc.Parent = moon
-
-    -- Кратеры (для реализма)
-    local function crater(sz, px, py)
-        local c = Instance.new("Frame")
-        c.Size = UDim2.fromScale(sz, sz)
-        c.Position = UDim2.fromScale(px, py)
-        c.BackgroundColor3 = Color3.fromRGB(220, 230, 245)
-        c.BorderSizePixel = 0
-        c.ZIndex = moon.ZIndex + 1
-        c.Parent = moon
-        Instance.new("UICorner", c).CornerRadius = UDim.new(1, 0)
-    end
-    crater(0.22, 0.22, 0.28)
-    crater(0.14, 0.6, 0.5)
-    crater(0.1, 0.4, 0.7)
-    crater(0.08, 0.7, 0.25)
-
-    -- Вырезающий круг (создаёт форму полумесяца)
-    local cut = Instance.new("Frame")
-    cut.Size = UDim2.fromScale(0.85, 0.85)
-    cut.Position = UDim2.fromScale(0.62, -0.12)
-    cut.AnchorPoint = Vector2.new(0.5, 0.5)
-    cut.BackgroundColor3 = Color3.fromRGB(12, 16, 28)
-    cut.BorderSizePixel = 0
-    cut.ZIndex = moon.ZIndex + 5
-    cut.Parent = h
-    Instance.new("UICorner", cut).CornerRadius = UDim.new(1, 0)
-
-    -- Мерцание
-    task.spawn(function()
-        while h.Parent do
-            glow.ImageTransparency = 0.5 + math.sin(tick() * 1.8) * 0.2
-            task.wait(0.05)
-        end
-    end)
-end)
-
--- ═══════════════════════════════════════════════════════════════
---  9. ЕДИНЫЙ WATERMARK (одна штука)
--- ═══════════════════════════════════════════════════════════════
-task.spawn(function()
-    task.wait(5.5)
-    
-    -- На всякий случай удаляем все ранее созданные "SSVWatermark"
-    for _, g in ipairs(game:GetService("CoreGui"):GetChildren()) do
-        if g.Name == "SSVWatermark" or g.Name == "SSV_Watermark" then
-            g:Destroy()
-        end
-    end
-    
-    local wm = Instance.new("ScreenGui")
-    wm.Name = "SSVWatermark"
-    wm.ResetOnSpawn = false
-    wm.DisplayOrder = 999999
-    wm.Parent = game:GetService("CoreGui")
-
-    local f = Instance.new("Frame")
-    f.Size = UDim2.new(0, 260, 0, 40)
-    f.Position = UDim2.new(0, 20, 0, 20)
-    f.BackgroundColor3 = Color3.fromRGB(4, 6, 12)
-    f.BackgroundTransparency = 0.15
-    f.BorderSizePixel = 0
-    f.Parent = wm
-
-    Instance.new("UICorner", f).CornerRadius = UDim.new(0, 10)
-
-    local st = Instance.new("UIStroke", f)
-    st.Color = Color3.fromRGB(100, 170, 255)
-    st.Thickness = 1.5
-    st.Transparency = 0.2
-
-    local l = Instance.new("TextLabel")
-    l.Size = UDim2.new(1, -20, 1, 0)
-    l.Position = UDim2.new(0, 12, 0, 0)
-    l.BackgroundTransparency = 1
-    l.Text = "ssv | created by qmee2"
-    l.TextColor3 = Color3.fromRGB(200, 220, 250)
-    l.Font = Enum.Font.GothamBold
-    l.TextSize = 14
-    l.TextXAlignment = Enum.TextXAlignment.Left
-    l.Parent = f
-
-    task.spawn(function()
-        local hue = 0
-        while f.Parent do
-            hue = (hue + 0.005) % 1
-            local col = Color3.fromHSV(hue, 0.7, 1)
-            st.Color = col
-            l.TextColor3 = Color3.fromRGB(200, 220, 250):Lerp(col, 0.3)
-            task.wait(0.03)
-        end
-    end)
 end)
