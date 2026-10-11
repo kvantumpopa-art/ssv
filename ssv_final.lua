@@ -1,5 +1,4 @@
 -- ssv | created by qmee2
--- ВЕРНУЛ ВСЕ ПАТЧИ + защита от краша
 local _0 = getgenv and getgenv() or _G
 _0.ResonanceRunning = nil
 _0.ResonanceStarting = nil
@@ -34,11 +33,7 @@ local function _g(u)
 end
 
 local src = _g(_u)
-
--- ═══ ВАЛИДАЦИЯ ═══
-if type(src) ~= "string" then error("[ssv] не строка") end
-if #src < 100000 then error("[ssv] слишком мало: " .. #src) end
-if src:find("_c = {94", 1, true) then error("[ssv] URL ведёт на патчер!") end
+if type(src) ~= "string" or #src < 100000 then error("[ssv] fail") end
 
 -- ═══ УБИРАЕМ ИНТРО ═══
 do
@@ -46,97 +41,103 @@ do
     if s1 then
         local e1 = src:find('return Intro', s1, true)
         if e1 then
-            local new = src:sub(1, s1 - 1) .. 'function Intro.Play() return true end\n' .. src:sub(e1)
-            if type(new) == "string" then src = new end
+            src = src:sub(1, s1 - 1) .. 'function Intro.Play() return true end\n' .. src:sub(e1)
         end
     end
 end
 
--- ═══ ЗАЩИЩЁННЫЙ ПАТЧ ═══
 local function R(p, r)
-    local ok, new = pcall(function() return src:gsub(p, r) end)
-    if ok and type(new) == "string" then src = new end
+    local ok, n = pcall(function() return src:gsub(p, r) end)
+    if ok then src = n end
 end
 
 -- ═══════════════════════════════════════════════════════════════
---  1. ЛУНА ВЕЗДЕ
+--  1. ЧЁРНАЯ ДЫРА — рабочий asset
 -- ═══════════════════════════════════════════════════════════════
-R('"moon%-star"', '""')
-R("'moon%-star'", "''")
-R('"moon"', '""')
-R("'moon'", "''")
-R('"Moon"', '""')
-R('BackgroundImage = "[^"]*[Mm]oon[^"]*"', 'BackgroundImage = ""')
+local BH = "rbxassetid://12574516034"
 
--- Эмодзи луны (через unicode escapes, безопасно)
-R('\240\159\140\153', '')  -- 🌙
-R('\240\159\140\154', '')  -- 🌚
-R('\240\159\140\155', '')  -- 🌛
-R('\240\159\140\156', '')  -- 🌜
-R('\240\159\140\146', '')  -- 🌒
-R('\240\159\140\147', '')  -- 🌓
-R('\240\159\140\148', '')  -- 🌔
-R('\240\159\140\149', '')  -- 🌕
-R('\240\159\140\150', '')  -- 🌖
-R('\240\159\140\151', '')  -- 🌗
-R('\240\159\140\152', '')  -- 🌘
+-- Заменяем ID луны (79685990879972) на чёрную дыру
+R('79685990879972', '12574516034')
+R('rbxassetid://79685990879972', BH)
+
+-- Lucide иконки луны → asset чёрной дыры
+R('"moon%-star"', '"' .. BH .. '"')
+R("'moon%-star'", "'" .. BH .. "'")
+R('"moon"', '"' .. BH .. '"')
+R("'moon'", "'" .. BH .. "'")
+R('"Moon"', '"' .. BH .. '"')
 
 -- ═══════════════════════════════════════════════════════════════
---  2. ЧЁРНЫЙ ФОН + ОРАНЖЕВЫЙ АКЦЕНТ + БЕЛЫЙ ТЕКСТ
+--  2. УБИРАЕМ ЛУНУ С ФОНА (жёстко)
 -- ═══════════════════════════════════════════════════════════════
-R('BackgroundColor = Color3%.fromRGB%(15, 15, 15%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
-R('BackgroundColor = Color3%.fromRGB%(10, 10, 10%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
-R('BackgroundColor = Color3%.fromRGB%(20, 20, 20%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
-R('BackgroundColor = Color3%.fromRGB%(4, 6, 12%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
+-- Все варианты BackgroundImage
+R('BackgroundImage = "[^"]*"', 'BackgroundImage = ""')
+R('BackgroundImage = [^\n,}]+', 'BackgroundImage = ""')
 
-R('MainColor = Color3%.fromRGB%(25, 25, 25%)', 'MainColor = Color3.fromRGB(8, 8, 8)')
-R('MainColor = Color3%.fromRGB%(30, 30, 30%)', 'MainColor = Color3.fromRGB(8, 8, 8)')
-R('MainColor = Color3%.fromRGB%(12, 16, 28%)', 'MainColor = Color3.fromRGB(8, 8, 8)')
+-- Хекс значение фона в теме
+R('BackgroundImage = ""', 'BackgroundImage = ""')
 
-R('AccentColor = Color3%.fromRGB%(125, 85, 255%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
-R('AccentColor = Color3%.fromRGB%(255, 130, 180%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
-R('AccentColor = Color3%.fromRGB%(255, 105, 180%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
-R('AccentColor = Color3%.fromRGB%(100, 170, 255%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
-R('AccentColor = Color3%.fromRGB%(240, 160, 180%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
-R('AccentColor = Color3%.fromRGB%(255, 255, 0%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
+-- Если фон задан как отдельная переменная
+R('Background%.Image = "[^"]*"', 'Background.Image = ""')
 
-R('OutlineColor = Color3%.fromRGB%(40, 40, 40%)', 'OutlineColor = Color3.fromRGB(40, 40, 40)')
-R('OutlineColor = Color3%.fromRGB%(70, 70, 70%)', 'OutlineColor = Color3.fromRGB(40, 40, 40)')
-R('OutlineColor = Color3%.fromRGB%(25, 38, 65%)', 'OutlineColor = Color3.fromRGB(40, 40, 40)')
+-- Эмодзи луны → чёрная дыра
+R('🌙', '🌑')
+R('🌚', '🌑')
+R('🌛', '🌑')
+R('🌜', '🌑')
+R('🌒', '🌑')
+R('🌓', '🌑')
+R('🌔', '🌑')
+R('🌕', '🌑')
+R('🌖', '🌑')
+R('🌗', '🌑')
+R('🌘', '🌑')
 
-R('FontColor = Color3%.new%(1, 1, 1%)', 'FontColor = Color3.fromRGB(255, 255, 255)')
-R('FontColor = Color3%.fromRGB%(120, 40, 90%)', 'FontColor = Color3.fromRGB(255, 255, 255)')
-R('FontColor = Color3%.fromRGB%(140, 80, 100%)', 'FontColor = Color3.fromRGB(255, 255, 255)')
-R('FontColor = Color3%.fromRGB%(200, 220, 250%)', 'FontColor = Color3.fromRGB(255, 255, 255)')
-
-R('RedColor = Color3%.fromRGB%(255, 50, 50%)', 'RedColor = Color3.fromRGB(255, 100, 60)')
-R('RedColor = Color3%.fromRGB%(220, 80, 100%)', 'RedColor = Color3.fromRGB(255, 100, 60)')
-R('RedColor = Color3%.fromRGB%(230, 60, 120%)', 'RedColor = Color3.fromRGB(255, 100, 60)')
-R('DestructiveColor = Color3%.fromRGB%(220, 38, 38%)', 'DestructiveColor = Color3.fromRGB(255, 80, 40)')
-R('DestructiveColor = Color3%.fromRGB%(200, 60, 90%)', 'DestructiveColor = Color3.fromRGB(255, 80, 40)')
+-- ═══════════════════════════════════════════════════════════════
+--  3. ТЁМНО-СИНЯЯ ТЕМА
+-- ═══════════════════════════════════════════════════════════════
+R('BackgroundColor = Color3%.fromRGB%(15, 15, 15%)', 'BackgroundColor = Color3.fromRGB(4, 6, 12)')
+R('BackgroundColor = Color3%.fromRGB%(10, 10, 10%)', 'BackgroundColor = Color3.fromRGB(4, 6, 12)')
+R('BackgroundColor = Color3%.fromRGB%(20, 20, 20%)', 'BackgroundColor = Color3.fromRGB(4, 6, 12)')
+R('MainColor = Color3%.fromRGB%(25, 25, 25%)', 'MainColor = Color3.fromRGB(12, 16, 28)')
+R('MainColor = Color3%.fromRGB%(30, 30, 30%)', 'MainColor = Color3.fromRGB(12, 16, 28)')
+R('AccentColor = Color3%.fromRGB%(125, 85, 255%)', 'AccentColor = Color3.fromRGB(100, 170, 255)')
+R('AccentColor = Color3%.fromRGB%(255, 130, 180%)', 'AccentColor = Color3.fromRGB(100, 170, 255)')
+R('AccentColor = Color3%.fromRGB%(255, 105, 180%)', 'AccentColor = Color3.fromRGB(100, 170, 255)')
+R('AccentColor = Color3%.fromRGB%(255, 140, 30%)', 'AccentColor = Color3.fromRGB(100, 170, 255)')
+R('AccentColor = Color3%.fromRGB%(255, 255, 0%)', 'AccentColor = Color3.fromRGB(100, 170, 255)')
+R('OutlineColor = Color3%.fromRGB%(40, 40, 40%)', 'OutlineColor = Color3.fromRGB(25, 38, 65)')
+R('OutlineColor = Color3%.fromRGB%(70, 70, 70%)', 'OutlineColor = Color3.fromRGB(25, 38, 65)')
+R('OutlineColor = Color3%.fromRGB%(50, 35, 25%)', 'OutlineColor = Color3.fromRGB(25, 38, 65)')
+R('FontColor = Color3%.new%(1, 1, 1%)', 'FontColor = Color3.fromRGB(200, 220, 250)')
+R('FontColor = Color3%.fromRGB%(120, 40, 90%)', 'FontColor = Color3.fromRGB(200, 220, 250)')
+R('FontColor = Color3%.fromRGB%(255, 220, 180%)', 'FontColor = Color3.fromRGB(200, 220, 250)')
+R('RedColor = Color3%.fromRGB%(255, 50, 50%)', 'RedColor = Color3.fromRGB(220, 80, 100)')
+R('DestructiveColor = Color3%.fromRGB%(220, 38, 38%)', 'DestructiveColor = Color3.fromRGB(200, 60, 90)')
 
 -- Хексы
-R('"0f0f0f"', '"000000"')
-R('"191919"', '"080808"')
-R('"7d55ff"', '"ff8c1e"')
-R('"64aaff"', '"ff8c1e"')
-R('"ff69b4"', '"ff8c1e"')
-R('"78285a"', '"ffffff"')
-R('"dcebff"', '"ffffff"')
+R('"0f0f0f"', '"04060c"')
+R('"191919"', '"0c101c"')
+R('"7d55ff"', '"64aaff"')
+R('"282828"', '"192641"')
+R('"ff69b4"', '"64aaff"')
+R('"78285a"', '"c8dcfa"')
+R('"ff8c1e"', '"64aaff"')
+R('"32231a"', '"192641"')
+R('"ffdcb4"', '"c8dcfa"')
 
 -- ═══════════════════════════════════════════════════════════════
---  3. AUTO-CLICKER → poses
+--  4. AUTO-CLICKER → poses
 -- ═══════════════════════════════════════════════════════════════
 R('<b>Auto%-Clicker</b>', '<b>poses</b>')
-R('"Auto%-Clicker"', '"poses"')
 
 -- ═══════════════════════════════════════════════════════════════
---  4. ЗВУК + NAME = "resonance"
+--  5. ЗВУК + NAME = "resonance"
 -- ═══════════════════════════════════════════════════════════════
 R('Volume = tonumber%(Data%.Volume%) or 3,', 'Name = "resonance", Volume = tonumber(Data.Volume) or 3,')
 
 -- ═══════════════════════════════════════════════════════════════
---  5. АВТОРЫ
+--  6. АВТОРЫ
 -- ═══════════════════════════════════════════════════════════════
 R('cracked by InLoad and wraith%.dev', 'created by qmee2')
 R('cracked by [^"]+', 'created by qmee2')
@@ -149,10 +150,10 @@ R('<b>Resonance</b>', '<b>ssv</b>')
 R('"Resonance %%s', '"ssv %%s')
 R('or "Resonance"', 'or "ssv"')
 R('AddTab%("<b>Home</b>", "house", "Profile, statistics"%)',
-  'AddTab("<b><font color=\\"#FF8C1E\\">ssv</font></b>", "", "ssv")')
+  'AddTab("<b><font color=\\"#64AAFF\\">ssv</font></b>", "' .. BH .. '", "ssv")')
 R('"v2%.9"', '""')
 
--- Resonance → ssv (защита служебных)
+-- Resonance → ssv
 local pr = {"ResonanceRunning","ResonanceStarting","ResonanceOriginalFallenHeight","ResonanceRestored","ResonanceIntro"}
 local rs = {}
 for i, nm in ipairs(pr) do
@@ -162,59 +163,55 @@ for i, nm in ipairs(pr) do
 end
 src = src:gsub("Resonance", "ssv")
 src = src:gsub("RESONANCE", "SSV")
+src = src:gsub("Project ssv", "ssv")
 for k, nm in pairs(rs) do src = src:gsub(k, nm) end
 
 R('cracked', 'created')
 R('crack', 'ssv')
 R('Crack', 'Ssv')
 R('CRACK', 'SSV')
+R('ssv%s+ssv', 'ssv')
+R('ssvssv', 'ssv')
 
 -- ═══════════════════════════════════════════════════════════════
---  ВАЛИДАЦИЯ РЕЗУЛЬТАТА
--- ═══════════════════════════════════════════════════════════════
-if type(src) ~= "string" then error("[ssv] патч сломал строку") end
-
--- ═══════════════════════════════════════════════════════════════
---  ЗАПУСК (с проверкой компиляции)
+--  7. ЗАПУСК
 -- ═══════════════════════════════════════════════════════════════
 local chunk, cerr = loadstring(src, "@ssv")
-if not chunk then
-    warn("[ssv] compile error: " .. tostring(cerr))
-    -- Пробуем запустить без патчей
-    local ok2, chunk2 = pcall(function() return loadstring(_g(_u), "@ssv_raw") end)
-    if ok2 and chunk2 then
-        warn("[ssv] запускаю без патчей")
-        chunk = chunk2
-    else
-        error("[ssv] не компилируется: " .. tostring(cerr), 0)
-    end
-end
-
+if not chunk then error("[ssv] compile: " .. tostring(cerr), 0) end
 local rok, rerr = pcall(chunk)
-if not rok then
-    warn("[ssv] run error: " .. tostring(rerr))
-    error(tostring(rerr), 0)
-end
+if not rok then error("[ssv] run: " .. tostring(rerr), 0) end
 
 -- ═══════════════════════════════════════════════════════════════
---  ПОСТ-ОБРАБОТКА: убираем фон с луной
+--  8. ПОСТ-ОБРАБОТКА: убираем фон и ставим чёрную дыру
+--     (на случай если в теме луна была в фоне через asset)
 -- ═══════════════════════════════════════════════════════════════
 task.spawn(function()
-    task.wait(6)
-    pcall(function()
+    task.wait(5)
+    local ok, err = pcall(function()
         local cg = game:GetService("CoreGui")
         local obsidian = cg:FindFirstChild("Obsidian")
         if not obsidian then return end
+
+        -- Ищем фон с луной и убираем
         for _, d in ipairs(obsidian:GetDescendants()) do
             if d:IsA("ImageLabel") then
-                local img = tostring(d.Image or "")
-                if img:find("79685", 1, true) then
+                local img = d.Image or ""
+                -- Убираем картинки где в названии moon
+                if d.Name:lower():find("moon") or d.Name:lower():find("bg") then
+                    if d.Size.X.Scale >= 0.9 and d.Size.Y.Scale >= 0.9 then
+                        d.Image = ""
+                        d.Visible = false
+                    end
+                end
+                -- Если это фон с asset луны
+                if img == "rbxassetid://79685990879972" then
                     d.Image = ""
                     d.Visible = false
                 end
             end
         end
     end)
+    if not ok then warn("[ssv] bg: " .. tostring(err)) end
 end)
 
 if type(writefile) == "function" then
