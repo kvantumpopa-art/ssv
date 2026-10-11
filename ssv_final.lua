@@ -1,19 +1,19 @@
 -- ═══════════════════════════════════════════════════════════════
---  ssv_final.lua — загрузчик + патчер Resonance
---  Залей этот файл на GitHub как ssv_final.lua
---  Потом юзеры просто запускают одну строку
+--  ssv_final.lua — загрузчик + патчер
+--  ЗАЛЕЙ ЭТО НА GITHUB как ssv_final.lua (в ветку master)
 -- ═══════════════════════════════════════════════════════════════
 
 local _0 = getgenv and getgenv() or _G
 _0.ResonanceRunning = nil
 _0.ResonanceStarting = nil
 
--- ═══ ЗАШИФРОВАННЫЙ URL (не видно в исходнике) ═══
+-- ═══ URL ОРИГИНАЛА RESONANCE (без .lua, скрыт) ═══
+-- Расшифровка: https://raw.githubusercontent.com/kvantumpopa-art/ssv/refs/heads/master/ssv
 local _c = {94,106,106,102,105,48,37,37,104,87,109,36,93,95,106,94,107,88,107,105,91,104,89,101,100,106,91,100,106,36,89,101,99,37,97,108,87,100,106,107,99,102,101,102,87,35,87,104,106,37,105,105,108,37,104,91,92,105,37,94,91,87,90,105,37,99,87,105,106,91,104,37,105,105,108}
 local _url = ""
 for _, n in ipairs(_c) do _url = _url .. string.char(n + 10) end
 
--- ═══ ЗАГРУЗКА (request не ловится хуками HttpGet) ═══
+-- ═══ ЗАГРУЗКА ═══
 local function _get(u)
     if type(request) == "function" then
         local ok, r = pcall(request, { Url = u, Method = "GET" })
@@ -34,31 +34,49 @@ local function _get(u)
     return nil
 end
 
-print("[ssv] Загрузка...")
+print("[ssv] Загрузка оригинала...")
 local src = _get(_url)
-if type(src) ~= "string" or #src < 1000 then
-    error("[ssv] Не удалось загрузить")
+
+if type(src) ~= "string" then
+    error("[ssv] Загрузка не удалась — проверь что файл 'ssv' есть в репозитории (без .lua)")
 end
+
 print("[ssv] Получено " .. #src .. " байт")
 
--- ═══ ПАТЧИ ═══
-local function R(pat, rep)
-    local ok, new = pcall(function() return src:gsub(pat, rep) end)
-    if ok then src = new end
+-- ═══ ЗАЩИТА ОТ ЗАЦИКЛИВАНИЯ ═══
+-- Если скачанный файл сам является патчером (а не оригиналом) — ошибка
+if src:find("ssv_final", 1, true) and src:find("_c = {94", 1, true) then
+    error("[ssv] ОШИБКА: URL ведёт на патчер, а не на оригинал Resonance! " ..
+          "Проверь что файл 'ssv' в репозитории — это ОРИГИНАЛ, а 'ssv_final.lua' — это патчер.")
 end
 
--- Авторы
-R('cracked by InLoad and wraith%.dev', 'ssv')
-R('cracked by [^"]+', 'ssv')
+if #src < 100000 then
+    error("[ssv] Файл слишком маленький (" .. #src .. " байт). " ..
+          "Оригинал Resonance ~1.3 МБ. Проверь URL.")
+end
+
+-- ═══ ПАТЧИ ═══
+local applied, failed = 0, 0
+
+local function R(pat, rep)
+    local ok, new, n = pcall(function() return src:gsub(pat, rep) end)
+    if ok and n and n > 0 then
+        src = new
+        applied = applied + 1
+    else
+        failed = failed + 1
+    end
+end
+
+-- Авторы (сначала длинные фразы, потом короткие)
+R('cracked by InLoad and wraith%.dev', 'created by qmee2 💙')
 R('cracked by: InLoad and <font color=\\"#baa4ff\\">wraith%.dev</font>', 'created by qmee2 💙')
+R('cracked by [^"]+', 'created by qmee2 💙')
 R('cracked by [^"<]+', 'created by qmee2 💙')
 R('dont stop using cracks! ts crack is so cool', '💙')
-R('wraith', 'qmee2')
 R('InLoad', 'qmee2')
-R('cracked', 'created')
-R('crack', 'ssv')
-R('Crack', 'Ssv')
-R('CRACK', 'SSV')
+R('wraith%.dev', 'qmee2')
+R('wraith', 'qmee2')
 
 -- Заголовки
 R('<b>Resonance</b>', '<b>ssv</b>')
@@ -75,7 +93,7 @@ R('Welcome to <b>[^<]*</b>[^<]*', 'Welcome to <b>ssv</b> 💙')
 -- Версия
 R('"v2%.9"', '""')
 
--- Resonance → ssv
+-- Resonance → ssv (защита служебных)
 local prot = {"ResonanceRunning","ResonanceStarting","ResonanceOriginalFallenHeight","ResonanceRestored","ResonanceIntro"}
 local rs = {}
 for i, nm in ipairs(prot) do
@@ -112,6 +130,12 @@ R('DarkColor = Color3%.new%(0, 0, 0%)', 'DarkColor = Color3.fromRGB(0, 0, 0)')
 R('OutlineColor = Color3%.fromRGB%(70, 70, 70%)', 'OutlineColor = Color3.fromRGB(25, 38, 65)')
 R('FontColor = Color3%.fromRGB%(255, 255, 255%)', 'FontColor = Color3.fromRGB(200, 220, 250)')
 
+-- crack → ssv (в самом конце)
+R('cracked', 'created')
+R('crack', 'ssv')
+R('Crack', 'Ssv')
+R('CRACK', 'SSV')
+
 -- Двойной ssv
 R('ssv%s+ssv', 'ssv')
 R('ssv•ssv', 'ssv')
@@ -120,6 +144,13 @@ R('ssv%-ssv', 'ssv')
 R('ssv/ssv', 'ssv')
 R('<b>ssv</b>%s*<b>ssv</b>', '<b>ssv</b>')
 R('ssvssv', 'ssv')
+
+print("[ssv] Патчи: " .. applied .. " ok, " .. failed .. " miss")
+
+-- ═══ ПРОВЕРКА ═══
+local function c(pat) return select(2, src:gsub(pat, "")) end
+print("[ssv] Осталось 'Resonance': " .. c("Resonance"))
+print("[ssv] Осталось 'crack': " .. c("crack") + c("Crack") + c("CRACK"))
 
 -- ═══ ЗАПУСК ═══
 local chunk, err = loadstring(src, "@ssv")
