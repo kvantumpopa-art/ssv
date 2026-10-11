@@ -3,11 +3,42 @@ local _0 = getgenv and getgenv() or _G
 _0.ResonanceRunning = nil
 _0.ResonanceStarting = nil
 
--- ═══ URL (закодирован) ═══
+-- ═══ URL оригинала ssv (закодирован) ═══
 local _c = {94,106,106,102,105,48,37,37,104,87,109,36,93,95,106,94,107,88,107,105,91,104,89,101,100,106,91,100,106,36,89,101,99,37,97,108,87,100,106,107,99,102,101,102,87,35,87,104,106,37,105,105,108,37,104,91,92,105,37,94,91,87,90,105,37,99,87,105,106,91,104,37,105,105,108}
 local _u = ""
 for _, n in ipairs(_c) do _u = _u .. string.char(n + 10) end
 
+-- ═══ URL ssv_final.lua (для rejoin) ═══
+local _cf = {94,106,106,102,105,48,37,37,104,87,109,36,93,95,106,94,107,88,107,105,91,104,89,101,100,106,91,100,106,36,89,101,99,37,97,108,87,100,106,107,99,102,101,102,87,35,87,104,106,37,105,105,108,37,104,91,92,105,37,94,91,87,90,105,37,99,87,105,106,91,104,37,105,105,108,85,92,95,100,87,98,36,98,107,87}
+local _uf = ""
+for _, n in ipairs(_cf) do _uf = _uf .. string.char(n + 10) end
+
+-- ═══════════════════════════════════════════════════════════════
+--  REJOIN FIX — оборачиваем queue_on_teleport, чтобы на rejoin
+--  загружался наш ssv_final.lua со всеми патчами
+-- ═══════════════════════════════════════════════════════════════
+do
+    local _restart_src = 'loadstring(game:HttpGet("' .. _uf .. '"))()'
+    
+    local function _wrap(realQ)
+        return function(_)
+            return realQ(_restart_src)
+        end
+    end
+    
+    -- Все возможные имена функции queue_on_teleport
+    if type(queue_on_teleport) == "function" then
+        _G.queue_on_teleport = _wrap(queue_on_teleport)
+    end
+    if type(queueonteleport) == "function" then
+        _G.queueonteleport = _wrap(queueonteleport)
+    end
+    if syn and type(syn.queue_on_teleport) == "function" then
+        syn.queue_on_teleport = _wrap(syn.queue_on_teleport)
+    end
+end
+
+-- ═══ ЗАГРУЗКА ═══
 local function _g(u)
     if type(request) == "function" then
         local ok, r = pcall(request, { Url = u, Method = "GET" })
@@ -37,24 +68,25 @@ local function R(p, r)
 end
 
 -- ═══════════════════════════════════════════════════════════════
---  1. ЗВУК — оставляем старый (97643101798871), но добавляем Name = "resonance"
+--  REJOIN FIX #2 — фолбэк если JobId пустой
 -- ═══════════════════════════════════════════════════════════════
--- Просто добавляем Name = "resonance" к созданию Sound
+-- Патчим QueueTeleport — если нет queue_on_teleport, всё равно пробуем
+R('if type%(queue%) ~= "function" then\n%s*if reload then fn18%("This executor does not support queue_on_teleport"%) end\n%s*return false\n%s*end',
+  'if type(queue) ~= "function" then\n\t\t\tif reload then fn18("This executor does not support queue_on_teleport") end\n\t\t\treturn false\n\t\tend\n\t\tpcall(function() local _rs = (queue_on_teleport or queueonteleport or (syn and syn.queue_on_teleport)); if type(_rs) == "function" then _rs([==[loadstring(game:HttpGet("' .. _uf .. '"))()]==]) end end)')
+
+-- ═══════════════════════════════════════════════════════════════
+--  ЗВУК — старый, но с Name = "resonance"
+-- ═══════════════════════════════════════════════════════════════
 R('Volume = tonumber%(Data%.Volume%) or 3,', 'Name = "resonance", Volume = tonumber(Data.Volume) or 3,')
 
 -- ═══════════════════════════════════════════════════════════════
---  2. УДАЛЯЕМ ВСЕ ЛУНЫ В СКРИПТЕ
+--  УДАЛЯЕМ ВСЕ ЛУНЫ
 -- ═══════════════════════════════════════════════════════════════
--- Убираем из иконок (lucide)
 R('"moon%-star"', '""')
 R("'moon%-star'", "''")
 R('"moon"', '""')
 R("'moon'", "''")
-
--- Убираем луну из BackgroundImage
 R('BackgroundImage = "[^"]*[Mm]oon[^"]*"', 'BackgroundImage = ""')
-
--- Убираем все эмодзи луны
 R('🌙', '')
 R('🌚', '')
 R('🌛', '')
@@ -68,14 +100,10 @@ R('🌖', '')
 R('🌗', '')
 R('🌘', '')
 
--- ═══════════════════════════════════════════════════════════════
---  3. AUTO-CLICKER → poses
--- ═══════════════════════════════════════════════════════════════
+-- AUTO-CLICKER → poses
 R('<b>Auto%-Clicker</b>', '<b>poses</b>')
 
--- ═══════════════════════════════════════════════════════════════
---  4. АВТОРЫ
--- ═══════════════════════════════════════════════════════════════
+-- Авторы
 R('cracked by InLoad and wraith%.dev', 'created by qmee2')
 R('cracked by [^"]+', 'created by qmee2')
 R('cracked by [^"<]+', 'created by qmee2')
@@ -123,3 +151,10 @@ local chunk, cerr = loadstring(src, "@ssv")
 if not chunk then error("[ssv] compile: " .. tostring(cerr), 0) end
 local rok, rerr = pcall(chunk)
 if not rok then error("[ssv] run: " .. tostring(rerr), 0) end
+
+-- ═══════════════════════════════════════════════════════════════
+--  На случай если у юзера нет queue_on_teleport — пишем файл
+-- ═══════════════════════════════════════════════════════════════
+if type(writefile) == "function" then
+    pcall(writefile, "ssvRestart.lua", 'loadstring(game:HttpGet("' .. _uf .. '"))()')
+end
