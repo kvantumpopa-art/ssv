@@ -35,7 +35,7 @@ end
 local src = _g(_u)
 if type(src) ~= "string" or #src < 100000 then error("[ssv] fail") end
 
--- ═══ УБИРАЕМ ИНТРО ═══
+-- Убираем интро
 do
     local s1 = src:find('function Intro.Play', 1, true)
     if s1 then
@@ -52,15 +52,12 @@ local function R(p, r)
 end
 
 -- ═══════════════════════════════════════════════════════════════
---  1. ЧЁРНАЯ ДЫРА — рабочий asset
+--  1. ЧЁРНАЯ ДЫРА (рабочий asset)
 -- ═══════════════════════════════════════════════════════════════
-local BH = "rbxassetid://12574516034"
+local BH = "rbxassetid://131961136048924"  -- Saggitarius A* — рабочая
 
--- Заменяем ID луны (79685990879972) на чёрную дыру
-R('79685990879972', '12574516034')
+R('79685990879972', '131961136048924')
 R('rbxassetid://79685990879972', BH)
-
--- Lucide иконки луны → asset чёрной дыры
 R('"moon%-star"', '"' .. BH .. '"')
 R("'moon%-star'", "'" .. BH .. "'")
 R('"moon"', '"' .. BH .. '"')
@@ -68,19 +65,13 @@ R("'moon'", "'" .. BH .. "'")
 R('"Moon"', '"' .. BH .. '"')
 
 -- ═══════════════════════════════════════════════════════════════
---  2. УБИРАЕМ ЛУНУ С ФОНА (жёстко)
+--  2. УБИРАЕМ ЛУНУ С ФОНА ЖЁСТКО
 -- ═══════════════════════════════════════════════════════════════
--- Все варианты BackgroundImage
 R('BackgroundImage = "[^"]*"', 'BackgroundImage = ""')
-R('BackgroundImage = [^\n,}]+', 'BackgroundImage = ""')
-
--- Хекс значение фона в теме
-R('BackgroundImage = ""', 'BackgroundImage = ""')
-
--- Если фон задан как отдельная переменная
+R('BackgroundImage = [^,}\n]+', 'BackgroundImage = ""')
 R('Background%.Image = "[^"]*"', 'Background.Image = ""')
 
--- Эмодзи луны → чёрная дыра
+-- Эмодзи луны
 R('🌙', '🌑')
 R('🌚', '🌑')
 R('🌛', '🌑')
@@ -94,37 +85,56 @@ R('🌗', '🌑')
 R('🌘', '🌑')
 
 -- ═══════════════════════════════════════════════════════════════
---  3. ТЁМНО-СИНЯЯ ТЕМА
+--  3. ЧЁРНЫЙ ФОН + ОРАНЖЕВО-БЕЛЫЕ ПОЛЗУНКИ
 -- ═══════════════════════════════════════════════════════════════
-R('BackgroundColor = Color3%.fromRGB%(15, 15, 15%)', 'BackgroundColor = Color3.fromRGB(4, 6, 12)')
-R('BackgroundColor = Color3%.fromRGB%(10, 10, 10%)', 'BackgroundColor = Color3.fromRGB(4, 6, 12)')
-R('BackgroundColor = Color3%.fromRGB%(20, 20, 20%)', 'BackgroundColor = Color3.fromRGB(4, 6, 12)')
-R('MainColor = Color3%.fromRGB%(25, 25, 25%)', 'MainColor = Color3.fromRGB(12, 16, 28)')
-R('MainColor = Color3%.fromRGB%(30, 30, 30%)', 'MainColor = Color3.fromRGB(12, 16, 28)')
-R('AccentColor = Color3%.fromRGB%(125, 85, 255%)', 'AccentColor = Color3.fromRGB(100, 170, 255)')
-R('AccentColor = Color3%.fromRGB%(255, 130, 180%)', 'AccentColor = Color3.fromRGB(100, 170, 255)')
-R('AccentColor = Color3%.fromRGB%(255, 105, 180%)', 'AccentColor = Color3.fromRGB(100, 170, 255)')
-R('AccentColor = Color3%.fromRGB%(255, 140, 30%)', 'AccentColor = Color3.fromRGB(100, 170, 255)')
-R('AccentColor = Color3%.fromRGB%(255, 255, 0%)', 'AccentColor = Color3.fromRGB(100, 170, 255)')
-R('OutlineColor = Color3%.fromRGB%(40, 40, 40%)', 'OutlineColor = Color3.fromRGB(25, 38, 65)')
-R('OutlineColor = Color3%.fromRGB%(70, 70, 70%)', 'OutlineColor = Color3.fromRGB(25, 38, 65)')
-R('OutlineColor = Color3%.fromRGB%(50, 35, 25%)', 'OutlineColor = Color3.fromRGB(25, 38, 65)')
-R('FontColor = Color3%.new%(1, 1, 1%)', 'FontColor = Color3.fromRGB(200, 220, 250)')
-R('FontColor = Color3%.fromRGB%(120, 40, 90%)', 'FontColor = Color3.fromRGB(200, 220, 250)')
-R('FontColor = Color3%.fromRGB%(255, 220, 180%)', 'FontColor = Color3.fromRGB(200, 220, 250)')
-R('RedColor = Color3%.fromRGB%(255, 50, 50%)', 'RedColor = Color3.fromRGB(220, 80, 100)')
-R('DestructiveColor = Color3%.fromRGB%(220, 38, 38%)', 'DestructiveColor = Color3.fromRGB(200, 60, 90)')
+-- Основные цвета — чёрный фон
+R('BackgroundColor = Color3%.fromRGB%(15, 15, 15%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
+R('BackgroundColor = Color3%.fromRGB%(10, 10, 10%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
+R('BackgroundColor = Color3%.fromRGB%(20, 20, 20%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
+R('BackgroundColor = Color3%.fromRGB%(4, 6, 12%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
+R('MainColor = Color3%.fromRGB%(25, 25, 25%)', 'MainColor = Color3.fromRGB(8, 8, 8)')
+R('MainColor = Color3%.fromRGB%(30, 30, 30%)', 'MainColor = Color3.fromRGB(8, 8, 8)')
+R('MainColor = Color3%.fromRGB%(12, 16, 28%)', 'MainColor = Color3.fromRGB(8, 8, 8)')
+
+-- Акцент (ползунки) — оранжевый
+R('AccentColor = Color3%.fromRGB%(125, 85, 255%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
+R('AccentColor = Color3%.fromRGB%(255, 130, 180%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
+R('AccentColor = Color3%.fromRGB%(255, 105, 180%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
+R('AccentColor = Color3%.fromRGB%(100, 170, 255%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
+R('AccentColor = Color3%.fromRGB%(255, 255, 0%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
+
+-- Обводка — светло-серый
+R('OutlineColor = Color3%.fromRGB%(40, 40, 40%)', 'OutlineColor = Color3.fromRGB(40, 40, 40)')
+R('OutlineColor = Color3%.fromRGB%(70, 70, 70%)', 'OutlineColor = Color3.fromRGB(40, 40, 40)')
+R('OutlineColor = Color3%.fromRGB%(25, 38, 65%)', 'OutlineColor = Color3.fromRGB(40, 40, 40)')
+
+-- Текст — белый
+R('FontColor = Color3%.new%(1, 1, 1%)', 'FontColor = Color3.fromRGB(255, 255, 255)')
+R('FontColor = Color3%.fromRGB%(120, 40, 90%)', 'FontColor = Color3.fromRGB(255, 255, 255)')
+R('FontColor = Color3%.fromRGB%(140, 80, 100%)', 'FontColor = Color3.fromRGB(255, 255, 255)')
+R('FontColor = Color3%.fromRGB%(200, 220, 250%)', 'FontColor = Color3.fromRGB(255, 255, 255)')
+
+-- Красный — оранжево-красный
+R('RedColor = Color3%.fromRGB%(255, 50, 50%)', 'RedColor = Color3.fromRGB(255, 100, 60)')
+R('RedColor = Color3%.fromRGB%(230, 60, 120%)', 'RedColor = Color3.fromRGB(255, 100, 60)')
+R('RedColor = Color3%.fromRGB%(220, 80, 100%)', 'RedColor = Color3.fromRGB(255, 100, 60)')
+R('DestructiveColor = Color3%.fromRGB%(220, 38, 38%)', 'DestructiveColor = Color3.fromRGB(255, 80, 40)')
+R('DestructiveColor = Color3%.fromRGB%(220, 50, 110%)', 'DestructiveColor = Color3.fromRGB(255, 80, 40)')
+R('DestructiveColor = Color3%.fromRGB%(200, 60, 90%)', 'DestructiveColor = Color3.fromRGB(255, 80, 40)')
 
 -- Хексы
-R('"0f0f0f"', '"04060c"')
-R('"191919"', '"0c101c"')
-R('"7d55ff"', '"64aaff"')
-R('"282828"', '"192641"')
-R('"ff69b4"', '"64aaff"')
-R('"78285a"', '"c8dcfa"')
-R('"ff8c1e"', '"64aaff"')
-R('"32231a"', '"192641"')
-R('"ffdcb4"', '"c8dcfa"')
+R('"0f0f0f"', '"000000"')
+R('"191919"', '"080808"')
+R('"04060c"', '"000000"')
+R('"0c101c"', '"080808"')
+R('"7d55ff"', '"ff8c1e"')
+R('"64aaff"', '"ff8c1e"')
+R('"282828"', '"282828"')
+R('"192641"', '"282828"')
+R('"ff69b4"', '"ff8c1e"')
+R('"78285a"', '"ffffff"')
+R('"c8dcfa"', '"ffffff"')
+R('"dcebff"', '"ffffff"')
 
 -- ═══════════════════════════════════════════════════════════════
 --  4. AUTO-CLICKER → poses
@@ -150,7 +160,7 @@ R('<b>Resonance</b>', '<b>ssv</b>')
 R('"Resonance %%s', '"ssv %%s')
 R('or "Resonance"', 'or "ssv"')
 R('AddTab%("<b>Home</b>", "house", "Profile, statistics"%)',
-  'AddTab("<b><font color=\\"#64AAFF\\">ssv</font></b>", "' .. BH .. '", "ssv")')
+  'AddTab("<b><font color=\\"#FF8C1E\\">ssv</font></b>", "' .. BH .. '", "ssv")')
 R('"v2%.9"', '""')
 
 -- Resonance → ssv
@@ -173,45 +183,54 @@ R('CRACK', 'SSV')
 R('ssv%s+ssv', 'ssv')
 R('ssvssv', 'ssv')
 
--- ═══════════════════════════════════════════════════════════════
---  7. ЗАПУСК
--- ═══════════════════════════════════════════════════════════════
+-- ЗАПУСК
 local chunk, cerr = loadstring(src, "@ssv")
 if not chunk then error("[ssv] compile: " .. tostring(cerr), 0) end
 local rok, rerr = pcall(chunk)
 if not rok then error("[ssv] run: " .. tostring(rerr), 0) end
 
 -- ═══════════════════════════════════════════════════════════════
---  8. ПОСТ-ОБРАБОТКА: убираем фон и ставим чёрную дыру
---     (на случай если в теме луна была в фоне через asset)
+--  7. ПОСТ-ОБРАБОТКА — убираем луну с фона реально
+--     Сканируем всё что есть и удаляем любой фон с луной
 -- ═══════════════════════════════════════════════════════════════
 task.spawn(function()
-    task.wait(5)
-    local ok, err = pcall(function()
+    task.wait(6)
+    pcall(function()
         local cg = game:GetService("CoreGui")
         local obsidian = cg:FindFirstChild("Obsidian")
         if not obsidian then return end
 
-        -- Ищем фон с луной и убираем
+        -- Ищем фон с луной и удаляем
+        local moonAssets = {
+            "79685990879972",
+            "rbxassetid://79685990879972",
+        }
+
         for _, d in ipairs(obsidian:GetDescendants()) do
-            if d:IsA("ImageLabel") then
-                local img = d.Image or ""
-                -- Убираем картинки где в названии moon
-                if d.Name:lower():find("moon") or d.Name:lower():find("bg") then
-                    if d.Size.X.Scale >= 0.9 and d.Size.Y.Scale >= 0.9 then
+            if d:IsA("ImageLabel") or d:IsA("ImageButton") then
+                local img = tostring(d.Image or "")
+                
+                -- Убираем любой фон с asset луны
+                for _, mid in ipairs(moonAssets) do
+                    if img:find(mid, 1, true) then
                         d.Image = ""
                         d.Visible = false
+                        d.BackgroundTransparency = 1
                     end
                 end
-                -- Если это фон с asset луны
-                if img == "rbxassetid://79685990879972" then
-                    d.Image = ""
-                    d.Visible = false
+                
+                -- Убираем декоративные фоны (большие, мало прозрачные)
+                if d.Name:lower():find("bg") or d.Name:lower():find("background") then
+                    if d.Size.X.Scale >= 0.85 and d.Size.Y.Scale >= 0.85 then
+                        if d.ImageTransparency < 0.9 then
+                            d.Image = ""
+                            d.Visible = false
+                        end
+                    end
                 end
             end
         end
     end)
-    if not ok then warn("[ssv] bg: " .. tostring(err)) end
 end)
 
 if type(writefile) == "function" then
