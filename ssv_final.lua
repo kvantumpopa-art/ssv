@@ -1,20 +1,15 @@
--- ═══════════════════════════════════════════════════════════════
---  ssv_final.lua — загрузчик + патчер
---  ЗАЛЕЙ ЭТО НА GITHUB как ssv_final.lua (в ветку master)
--- ═══════════════════════════════════════════════════════════════
-
+-- ssv | created by qmee2
 local _0 = getgenv and getgenv() or _G
 _0.ResonanceRunning = nil
 _0.ResonanceStarting = nil
 
--- ═══ URL ОРИГИНАЛА RESONANCE (без .lua, скрыт) ═══
--- Расшифровка: https://raw.githubusercontent.com/kvantumpopa-art/ssv/refs/heads/master/ssv
+-- ═══ URL оригинала (закодирован) ═══
+-- Это: https://raw.githubusercontent.com/kvantumpopa-art/ssv/refs/heads/master/ssv
 local _c = {94,106,106,102,105,48,37,37,104,87,109,36,93,95,106,94,107,88,107,105,91,104,89,101,100,106,91,100,106,36,89,101,99,37,97,108,87,100,106,107,99,102,101,102,87,35,87,104,106,37,105,105,108,37,104,91,92,105,37,94,91,87,90,105,37,99,87,105,106,91,104,37,105,105,108}
-local _url = ""
-for _, n in ipairs(_c) do _url = _url .. string.char(n + 10) end
+local _u = ""
+for _, n in ipairs(_c) do _u = _u .. string.char(n + 10) end
 
--- ═══ ЗАГРУЗКА ═══
-local function _get(u)
+local function _g(u)
     if type(request) == "function" then
         local ok, r = pcall(request, { Url = u, Method = "GET" })
         if ok and r and r.Body then return r.Body end
@@ -23,54 +18,22 @@ local function _get(u)
         local ok, r = pcall(http_request, { Url = u })
         if ok and r and r.Body then return r.Body end
     end
-    if type(http) == "table" and type(http.get) == "function" then
-        local ok, r = pcall(http.get, u)
-        if ok and r and r.Body then return r.Body end
-    end
-    if type(game.HttpGet) == "function" then
-        local ok, r = pcall(game.HttpGet, game, u, true)
-        if ok and type(r) == "string" then return r end
-    end
-    return nil
+    local ok, r = pcall(game.HttpGet, game, u, true)
+    if ok and type(r) == "string" then return r end
 end
 
-print("[ssv] Загрузка оригинала...")
-local src = _get(_url)
+print("[ssv] Загрузка...")
+local src = _g(_u)
 
-if type(src) ~= "string" then
-    error("[ssv] Загрузка не удалась — проверь что файл 'ssv' есть в репозитории (без .lua)")
+if type(src) ~= "string" or #src < 100000 then
+    error("[ssv] Не удалось загрузить оригинал. Размер: " .. tostring(src and #src or "nil"))
 end
-
 print("[ssv] Получено " .. #src .. " байт")
 
--- ═══ ЗАЩИТА ОТ ЗАЦИКЛИВАНИЯ ═══
--- Если скачанный файл сам является патчером (а не оригиналом) — ошибка
-if src:find("ssv_final", 1, true) and src:find("_c = {94", 1, true) then
-    error("[ssv] ОШИБКА: URL ведёт на патчер, а не на оригинал Resonance! " ..
-          "Проверь что файл 'ssv' в репозитории — это ОРИГИНАЛ, а 'ssv_final.lua' — это патчер.")
-end
+local function R(p, r) local ok, n = pcall(function() return src:gsub(p, r) end) if ok then src = n end end
 
-if #src < 100000 then
-    error("[ssv] Файл слишком маленький (" .. #src .. " байт). " ..
-          "Оригинал Resonance ~1.3 МБ. Проверь URL.")
-end
-
--- ═══ ПАТЧИ ═══
-local applied, failed = 0, 0
-
-local function R(pat, rep)
-    local ok, new, n = pcall(function() return src:gsub(pat, rep) end)
-    if ok and n and n > 0 then
-        src = new
-        applied = applied + 1
-    else
-        failed = failed + 1
-    end
-end
-
--- Авторы (сначала длинные фразы, потом короткие)
+-- Авторы
 R('cracked by InLoad and wraith%.dev', 'created by qmee2 💙')
-R('cracked by: InLoad and <font color=\\"#baa4ff\\">wraith%.dev</font>', 'created by qmee2 💙')
 R('cracked by [^"]+', 'created by qmee2 💙')
 R('cracked by [^"<]+', 'created by qmee2 💙')
 R('dont stop using cracks! ts crack is so cool', '💙')
@@ -85,28 +48,21 @@ R('"Resonance", 79685990879972', '"ssv", 79685990879972')
 R('or "Resonance"', 'or "ssv"')
 
 -- Home
-R('AddTab%("<b>Home</b>", "house", "Profile, statistics"%)',
-  'AddTab("<b><font color=\\"#64AAFF\\">ssv</font></b>", "moon", "ssv")')
+R('AddTab%("<b>Home</b>", "house", "Profile, statistics"%)', 'AddTab("<b><font color=\\"#64AAFF\\">ssv</font></b>", "moon", "ssv")')
 R('Welcome to <b><font color=\\"#fffb00\\">ssv crack</font></b>', 'Welcome to <b>ssv</b> 💙')
 R('Welcome to <b>[^<]*</b>[^<]*', 'Welcome to <b>ssv</b> 💙')
 
 -- Версия
 R('"v2%.9"', '""')
 
--- Resonance → ssv (защита служебных)
-local prot = {"ResonanceRunning","ResonanceStarting","ResonanceOriginalFallenHeight","ResonanceRestored","ResonanceIntro"}
+-- Resonance → ssv
+local pr = {"ResonanceRunning","ResonanceStarting","ResonanceOriginalFallenHeight","ResonanceRestored","ResonanceIntro"}
 local rs = {}
-for i, nm in ipairs(prot) do
-    local k = "__SSVP" .. i .. "__"
-    src = src:gsub(nm, k)
-    rs[k] = nm
-end
+for i, nm in ipairs(pr) do local k = "__S"..i.."__" src = src:gsub(nm, k) rs[k] = nm end
 src = src:gsub("Resonance", "ssv")
 src = src:gsub("RESONANCE", "SSV")
 src = src:gsub("Project ssv", "ssv")
-for k, nm in pairs(rs) do
-    src = src:gsub(k, nm)
-end
+for k, nm in pairs(rs) do src = src:gsub(k, nm) end
 
 -- Луна тёмная
 R('"moon%-star"', '"moon"')
@@ -126,11 +82,10 @@ R('OutlineColor = Color3%.fromRGB%(40, 40, 40%)', 'OutlineColor = Color3.fromRGB
 R('FontColor = Color3%.new%(1, 1, 1%)', 'FontColor = Color3.fromRGB(200, 220, 250)')
 R('RedColor = Color3%.fromRGB%(255, 50, 50%)', 'RedColor = Color3.fromRGB(220, 80, 100)')
 R('DestructiveColor = Color3%.fromRGB%(220, 38, 38%)', 'DestructiveColor = Color3.fromRGB(200, 60, 90)')
-R('DarkColor = Color3%.new%(0, 0, 0%)', 'DarkColor = Color3.fromRGB(0, 0, 0)')
 R('OutlineColor = Color3%.fromRGB%(70, 70, 70%)', 'OutlineColor = Color3.fromRGB(25, 38, 65)')
 R('FontColor = Color3%.fromRGB%(255, 255, 255%)', 'FontColor = Color3.fromRGB(200, 220, 250)')
 
--- crack → ssv (в самом конце)
+-- crack → ssv
 R('cracked', 'created')
 R('crack', 'ssv')
 R('Crack', 'Ssv')
@@ -138,29 +93,19 @@ R('CRACK', 'SSV')
 
 -- Двойной ssv
 R('ssv%s+ssv', 'ssv')
-R('ssv•ssv', 'ssv')
-R('ssv%.ssv', 'ssv')
-R('ssv%-ssv', 'ssv')
-R('ssv/ssv', 'ssv')
-R('<b>ssv</b>%s*<b>ssv</b>', '<b>ssv</b>')
 R('ssvssv', 'ssv')
+R('<b>ssv</b>%s*<b>ssv</b>', '<b>ssv</b>')
 
-print("[ssv] Патчи: " .. applied .. " ok, " .. failed .. " miss")
-
--- ═══ ПРОВЕРКА ═══
-local function c(pat) return select(2, src:gsub(pat, "")) end
+-- Проверка
+local function c(p) return select(2, src:gsub(p, "")) end
 print("[ssv] Осталось 'Resonance': " .. c("Resonance"))
 print("[ssv] Осталось 'crack': " .. c("crack") + c("Crack") + c("CRACK"))
 
--- ═══ ЗАПУСК ═══
+-- Запуск
 local chunk, err = loadstring(src, "@ssv")
-if not chunk then
-    error("[ssv] Ошибка компиляции: " .. tostring(err))
-end
+if not chunk then error("[ssv] Ошибка компиляции: " .. tostring(err)) end
 
 local ok, rerr = pcall(chunk)
-if not ok then
-    error("[ssv] Ошибка выполнения: " .. tostring(rerr))
-end
+if not ok then error("[ssv] Ошибка: " .. tostring(rerr)) end
 
 print("[ssv] ✓ Готово 💙 created by qmee2")
