@@ -52,13 +52,74 @@ local function R(p, r)
 end
 
 -- ═══════════════════════════════════════════════════════════════
---  1. ЛУНА — только lucide-имена (безопасно)
+--  1. ЛУНА — только lucide-имена
 -- ═══════════════════════════════════════════════════════════════
 R('"moon%-star"', '""')
+R("'moon%-star'", "''")
 R('"moon"', '""')
+R("'moon'", "''")
+R('"Moon"', '""')
 
 -- ═══════════════════════════════════════════════════════════════
---  2. ЧЁРНЫЙ ФОН + ОРАНЖЕВЫЙ АКЦЕНТ + БЕЛЫЙ ТЕКСТ
+--  2. ЛУНА С ФОНА — через функцию (безопасно)
+-- ═══════════════════════════════════════════════════════════════
+local ok_bg, new_bg = pcall(function()
+    return src:gsub('BackgroundImage = "([^"]*)"', function(v)
+        local low = v:lower()
+        if low:find("moon") or low:find("79685") or low:find("luna") then
+            return 'BackgroundImage = ""'
+        end
+        return 'BackgroundImage = "' .. v .. '"'
+    end)
+end)
+if ok_bg and type(new_bg) == "string" then src = new_bg end
+
+-- То же для одинарных кавычек
+local ok_bg2, new_bg2 = pcall(function()
+    return src:gsub("BackgroundImage = '([^']*)'", function(v)
+        local low = v:lower()
+        if low:find("moon") or low:find("79685") or low:find("luna") then
+            return "BackgroundImage = ''"
+        end
+        return "BackgroundImage = '" .. v .. "'"
+    end)
+end)
+if ok_bg2 and type(new_bg2) == "string" then src = new_bg2 end
+
+-- ═══════════════════════════════════════════════════════════════
+--  3. ДВОЙНОЙ qmee2 — схлопываем
+-- ═══════════════════════════════════════════════════════════════
+R('qmee2%s+qmee2', 'qmee2')
+R('qmee2•qmee2', 'qmee2')
+R('qmee2%.qmee2', 'qmee2')
+R('qmee2%-qmee2', 'qmee2')
+R('qmee2_qmee2', 'qmee2')
+R('qmee2/qmee2', 'qmee2')
+R('qmee2qmee2', 'qmee2')
+R('created by qmee2 and qmee2', 'created by qmee2')
+R('by qmee2 and qmee2', 'by qmee2')
+
+-- ═══════════════════════════════════════════════════════════════
+--  4. ДВОЙНОЙ ssv — схлопываем БЕЗОПАСНО
+--  Через функцию, только если два ssv рядом без кавычек
+-- ═══════════════════════════════════════════════════════════════
+local ok_ssv, new_ssv = pcall(function()
+    return src:gsub('ssv([%s•%.%-/_]+)ssv', 'ssv')
+end)
+if ok_ssv and type(new_ssv) == "string" then src = new_ssv end
+
+-- Отдельно для "ssvssv" (без разделителя)
+local ok_ssv2, new_ssv2 = pcall(function()
+    return src:gsub('ssvssv', 'ssv')
+end)
+if ok_ssv2 and type(new_ssv2) == "string" then src = new_ssv2 end
+
+-- "created by ssv ssv" → "created by ssv"
+R('created by ssv ssv', 'created by ssv')
+R('by ssv ssv', 'by ssv')
+
+-- ═══════════════════════════════════════════════════════════════
+--  5. ЧЁРНЫЙ ФОН + ОРАНЖЕВЫЙ АКЦЕНТ + БЕЛЫЙ ТЕКСТ
 -- ═══════════════════════════════════════════════════════════════
 R('BackgroundColor = Color3%.fromRGB%(15, 15, 15%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
 R('BackgroundColor = Color3%.fromRGB%(10, 10, 10%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
@@ -81,17 +142,17 @@ R('RedColor = Color3%.fromRGB%(255, 50, 50%)', 'RedColor = Color3.fromRGB(255, 1
 R('DestructiveColor = Color3%.fromRGB%(220, 38, 38%)', 'DestructiveColor = Color3.fromRGB(255, 80, 40)')
 
 -- ═══════════════════════════════════════════════════════════════
---  3. AUTO-CLICKER → poses
+--  6. AUTO-CLICKER → poses
 -- ═══════════════════════════════════════════════════════════════
 R('<b>Auto%-Clicker</b>', '<b>poses</b>')
 
 -- ═══════════════════════════════════════════════════════════════
---  4. ЗВУК + NAME = "resonance"
+--  7. ЗВУК + NAME = "resonance"
 -- ═══════════════════════════════════════════════════════════════
 R('Volume = tonumber%(Data%.Volume%) or 3,', 'Name = "resonance", Volume = tonumber(Data.Volume) or 3,')
 
 -- ═══════════════════════════════════════════════════════════════
---  5. АВТОРЫ
+--  8. АВТОРЫ
 -- ═══════════════════════════════════════════════════════════════
 R('cracked by InLoad and wraith%.dev', 'created by qmee2')
 R('cracked by [^"]+', 'created by qmee2')
@@ -121,6 +182,18 @@ R('cracked', 'created')
 R('crack', 'ssv')
 R('Crack', 'Ssv')
 R('CRACK', 'SSV')
+
+-- ═══════════════════════════════════════════════════════════════
+--  9. ФИНАЛЬНАЯ ЗАЧИСТКА ДУБЛЕЙ (после всех замен)
+-- ═══════════════════════════════════════════════════════════════
+R('qmee2%s+qmee2', 'qmee2')
+R('ssv%s+ssv', 'ssv')
+R('qmee2qmee2', 'qmee2')
+R('ssvssv', 'ssv')
+R('by qmee2 qmee2', 'by qmee2')
+R('by ssv ssv', 'by ssv')
+R('qmee2 %| qmee2', 'qmee2')
+R('ssv %| ssv', 'ssv')
 
 -- ═══════════════════════════════════════════════════════════════
 --  ЗАПУСК
