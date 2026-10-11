@@ -48,41 +48,77 @@ end
 
 local function R(p, r)
     local ok, n = pcall(function() return src:gsub(p, r) end)
-    if ok then src = n end
+    if ok and type(n) == "string" then src = n end
 end
 
 -- ═══════════════════════════════════════════════════════════════
---  ЗАМЕНА ЛУНЫ НА ЧЁРНУЮ ДЫРУ
---  Roblox asset чёрной дыры (Гаргантюа-стиль)
+--  1. УДАЛЯЕМ ВСЕ ЛУНЫ ИЗ КОДА
 -- ═══════════════════════════════════════════════════════════════
-local BLACKHOLE_ID = "rbxassetid://16104850011"
+-- Roblox asset луны
+R('79685990879972', '0')
+R('rbxassetid://79685990879972', 'rbxassetid://0')
 
--- Меняем asset ID луны (79685990879972) на чёрную дыру
-R('79685990879972', '16104850011')
-
--- Lucide иконки луны → заменяем на asset
-R('"moon%-star"', '"' .. BLACKHOLE_ID .. '"')
-R('"moon"', '"' .. BLACKHOLE_ID .. '"')
-R('"Moon"', '"' .. BLACKHOLE_ID .. '"')
+-- Lucide имена луны → пусто (пустая иконка, не крашит)
+R('"moon%-star"', '""')
+R("'moon%-star'", "''")
+R('"moon"', '""')
+R("'moon'", "''")
+R('"Moon"', '""')
+R("'Moon'", "''")
 
 -- BackgroundImage с луной → пусто
 R('BackgroundImage = "[^"]*[Mm]oon[^"]*"', 'BackgroundImage = ""')
+R("BackgroundImage = '[^']*[Mm]oon[^']*'", "BackgroundImage = ''")
 
--- Эмодзи луны → чёрная дыра
-R('🌙', '🌑')
-R('🌚', '🌑')
-R('🌛', '🌑')
-R('🌜', '🌑')
-R('🌒', '🌑')
-R('🌓', '🌑')
-R('🌔', '🌑')
-R('🌕', '🌑')
-R('🌖', '🌑')
-R('🌗', '🌑')
-R('🌘', '🌑')
+-- Все эмодзи луны (через байты)
+R('\240\159\140\145', '')
+R('\240\159\140\146', '')
+R('\240\159\140\147', '')
+R('\240\159\140\148', '')
+R('\240\159\140\149', '')
+R('\240\159\140\150', '')
+R('\240\159\140\151', '')
+R('\240\159\140\152', '')
+R('\240\159\140\153', '')
+R('\240\159\140\154', '')
+R('\240\159\140\155', '')
+R('\240\159\140\156', '')
+R('\240\159\140\157', '')
+R('\240\159\140\158', '')
 
 -- ═══════════════════════════════════════════════════════════════
---  СИНИЙ UI
+--  2. УДАЛЯЕМ ПОВТОРЯЮЩИЕСЯ qmee2 / ssv (в коде)
+-- ═══════════════════════════════════════════════════════════════
+local function collapse(text, word)
+    local iter = 0
+    while iter < 20 do
+        iter = iter + 1
+        local ok, new = pcall(function()
+            return text:gsub(word .. "[%s%p]+" .. word, word)
+        end)
+        if ok and type(new) == "string" and new ~= text then
+            text = new
+        else
+            break
+        end
+    end
+    local ok2, new2 = pcall(function() return text:gsub(word .. word, word) end)
+    if ok2 and type(new2) == "string" then text = new2 end
+    return text
+end
+
+src = collapse(src, "qmee2")
+src = collapse(src, "ssv")
+
+-- Явные случаи
+R('created by qmee2 and qmee2', 'created by qmee2')
+R('by qmee2 and qmee2', 'by qmee2')
+R('created by qmee2 qmee2', 'created by qmee2')
+R('ssv and ssv', 'ssv')
+R('ssv ssv', 'ssv')
+
+-- ═══════════════════════════════════════════════════════════════
+--  3. СИНЯЯ ТЕМА (потом заменишь на свою)
 -- ═══════════════════════════════════════════════════════════════
 R('BackgroundColor = Color3%.fromRGB%(15, 15, 15%)', 'BackgroundColor = Color3.fromRGB(4, 6, 12)')
 R('BackgroundColor = Color3%.fromRGB%(10, 10, 10%)', 'BackgroundColor = Color3.fromRGB(4, 6, 12)')
@@ -121,11 +157,12 @@ R('wraith', 'qmee2')
 R('<b>Resonance</b>', '<b>ssv</b>')
 R('"Resonance %%s', '"ssv %%s')
 R('or "Resonance"', 'or "ssv"')
+-- Home — без иконки, чисто "ssv"
 R('AddTab%("<b>Home</b>", "house", "Profile, statistics"%)',
-  'AddTab("<b>ssv</b>", "' .. BLACKHOLE_ID .. '", "ssv")')
+  'AddTab("<b>ssv</b>", "", "ssv")')
 R('"v2%.9"', '""')
 
--- Resonance → ssv
+-- Resonance → ssv (защита служебных)
 local pr = {"ResonanceRunning","ResonanceStarting","ResonanceOriginalFallenHeight","ResonanceRestored","ResonanceIntro"}
 local rs = {}
 for i, nm in ipairs(pr) do
@@ -142,14 +179,178 @@ R('cracked', 'created')
 R('crack', 'ssv')
 R('Crack', 'Ssv')
 R('CRACK', 'SSV')
-R('ssv%s+ssv', 'ssv')
-R('ssvssv', 'ssv')
 
--- ЗАПУСК
+-- Финальная зачистка повторов
+src = collapse(src, "qmee2")
+src = collapse(src, "ssv")
+
+-- ═══════════════════════════════════════════════════════════════
+--  4. ЗАПУСК
+-- ═══════════════════════════════════════════════════════════════
 local chunk, cerr = loadstring(src, "@ssv")
 if not chunk then error("[ssv] compile: " .. tostring(cerr), 0) end
 local rok, rerr = pcall(chunk)
 if not rok then error("[ssv] run: " .. tostring(rerr), 0) end
+
+-- ═══════════════════════════════════════════════════════════════
+--  5. ПОСТ-ОБРАБОТКА: чистим UI — ищем Obsidian ВЕЗДЕ
+--  Удаляем:
+--   - луну по asset 79685990879972
+--   - все ImageLabel с "moon"/"luna" в имени
+--   - большой фон (>1000×500)
+--   - повторы qmee2/ssv в текстах
+-- ═══════════════════════════════════════════════════════════════
+
+local function getAllObs()
+    local list = {}
+    local cg = game:GetService("CoreGui")
+    for _, d in ipairs(cg:GetDescendants()) do
+        if d.Name == "Obsidian" and (d:IsA("ScreenGui") or d:IsA("Folder")) then
+            table.insert(list, d)
+        end
+    end
+    return list
+end
+
+local function cleanObs(obs)
+    if not obs then return end
+
+    for _, d in ipairs(obs:GetDescendants()) do
+        -- Картинки
+        if d:IsA("ImageLabel") or d:IsA("ImageButton") then
+            local img = tostring(d.Image or "")
+            local low = img:lower()
+            local full = d:GetFullName():lower()
+            local sz = d.AbsoluteSize
+
+            -- Луна: asset 79685* / moon в asset / moon/luna в пути
+            local is_moon = false
+            if img:find("79685", 1, true) then is_moon = true end
+            if low:find("moon", 1, true) then is_moon = true end
+            if low:find("luna", 1, true) then is_moon = true end
+            if full:find("moon", 1, true) then is_moon = true end
+            if full:find("luna", 1, true) then is_moon = true end
+
+            if is_moon then
+                d.Image = ""
+                d.ImageTransparency = 1
+                d.Visible = false
+                d.BackgroundTransparency = 1
+            end
+
+            -- Большой фон (>1000×500)
+            if sz.X > 1000 or sz.Y > 500 then
+                d.Image = ""
+                d.ImageTransparency = 1
+                d.Visible = false
+                d.BackgroundTransparency = 1
+            end
+        end
+
+        -- Тексты — убираем повторы
+        if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then
+            local t = tostring(d.Text or "")
+            if t:find("qmee2") or t:find("ssv") then
+                local new = t
+                local i = 0
+                while i < 15 do
+                    i = i + 1
+                    local nn = new
+                        :gsub("qmee2[%s%p]+qmee2", "qmee2")
+                        :gsub("qmee2qmee2", "qmee2")
+                        :gsub("ssv[%s%p]+ssv", "ssv")
+                        :gsub("ssvssv", "ssv")
+                    if nn == new then break end
+                    new = nn
+                end
+                if new ~= t then d.Text = new end
+            end
+        end
+    end
+
+    -- Фон главного окна (прямой ребёнок Obsidian)
+    for _, c in ipairs(obs:GetChildren()) do
+        if c:IsA("ImageLabel") then
+            c.Image = ""
+            c.ImageTransparency = 1
+            c.Visible = false
+            c.BackgroundTransparency = 1
+        end
+    end
+end
+
+-- Запускаем зачистку несколько раз — UI строится поэтапно
+for _, delay in ipairs({2, 4, 6, 8, 12, 16, 22, 30}) do
+    task.delay(delay, function()
+        pcall(function()
+            for _, obs in ipairs(getAllObs()) do
+                cleanObs(obs)
+            end
+        end)
+    end)
+end
+
+-- Слушаем новые Obsidian и новые картинки внутри них
+task.spawn(function()
+    pcall(function()
+        local cg = game:GetService("CoreGui")
+        local watched = {}
+
+        cg.DescendantAdded:Connect(function(d)
+            if d.Name == "Obsidian" and (d:IsA("ScreenGui") or d:IsA("Folder")) then
+                if not watched[d] then
+                    watched[d] = true
+                    task.wait(0.3)
+                    cleanObs(d)
+                end
+            end
+        end)
+
+        for _, obs in ipairs(getAllObs()) do
+            if not watched[obs] then
+                watched[obs] = true
+                pcall(function()
+                    obs.DescendantAdded:Connect(function(d)
+                        if d:IsA("ImageLabel") or d:IsA("ImageButton") then
+                            task.wait(0.05)
+                            pcall(function()
+                                local img = tostring(d.Image or "")
+                                local low = img:lower()
+                                local sz = d.AbsoluteSize
+                                if img:find("79685", 1, true) or low:find("moon") or low:find("luna") then
+                                    d.Image = ""
+                                    d.ImageTransparency = 1
+                                    d.Visible = false
+                                end
+                                if sz.X > 1000 or sz.Y > 500 then
+                                    d.Image = ""
+                                    d.ImageTransparency = 1
+                                    d.Visible = false
+                                    d.BackgroundTransparency = 1
+                                end
+                            end)
+                        end
+                    end)
+                end)
+            end
+        end
+    end)
+end)
+
+-- Звук — переименовываем в SoundService
+task.spawn(function()
+    for _ = 1, 30 do
+        task.wait(1)
+        pcall(function()
+            local ss = game:GetService("SoundService")
+            for _, d in ipairs(ss:GetDescendants()) do
+                if d:IsA("Sound") and d.Name ~= "resonance" then
+                    d.Name = "resonance"
+                end
+            end
+        end)
+    end
+end)
 
 if type(writefile) == "function" then
     pcall(writefile, "ssvRestart.lua", 'loadstring(game:HttpGet("' .. _uf .. '"))()')
