@@ -3,26 +3,10 @@ local _0 = getgenv and getgenv() or _G
 _0.ResonanceRunning = nil
 _0.ResonanceStarting = nil
 
--- ═══ URL ssv ═══
 local _c = {94,106,106,102,105,48,37,37,104,87,109,36,93,95,106,94,107,88,107,105,91,104,89,101,100,106,91,100,106,36,89,101,99,37,97,108,87,100,106,107,99,102,101,102,87,35,87,104,106,37,105,105,108,37,104,91,92,105,37,94,91,87,90,105,37,99,87,105,106,91,104,37,105,105,108}
 local _u = ""
 for _, n in ipairs(_c) do _u = _u .. string.char(n + 10) end
 
--- ═══ URL ssv_final.lua ═══
-local _cf = {94,106,106,102,105,48,37,37,104,87,109,36,93,95,106,94,107,88,107,105,91,104,89,101,100,106,91,100,106,36,89,101,99,37,97,108,87,100,106,107,99,102,101,102,87,35,87,104,106,37,105,105,108,37,104,91,92,105,37,94,91,87,90,105,37,99,87,105,106,91,104,37,105,105,108,85,92,95,100,87,98,36,98,107,87}
-local _uf = ""
-for _, n in ipairs(_cf) do _uf = _uf .. string.char(n + 10) end
-
--- ═══ REJOIN FIX ═══
-do
-    local _rs = 'loadstring(game:HttpGet("' .. _uf .. '"))()'
-    local function _w(q) return function(_) return q(_rs) end end
-    if type(queue_on_teleport) == "function" then _G.queue_on_teleport = _w(queue_on_teleport) end
-    if type(queueonteleport) == "function" then _G.queueonteleport = _w(queueonteleport) end
-    if syn and type(syn.queue_on_teleport) == "function" then syn.queue_on_teleport = _w(syn.queue_on_teleport) end
-end
-
--- ═══ ЗАГРУЗКА ═══
 local function _g(u)
     if type(request) == "function" then
         local ok, r = pcall(request, { Url = u, Method = "GET" })
@@ -35,7 +19,7 @@ end
 local src = _g(_u)
 if type(src) ~= "string" or #src < 100000 then error("[ssv] fail") end
 
--- Убираем интро
+-- ═══ УБИРАЕМ ИНТРО ═══
 do
     local s1 = src:find('function Intro.Play', 1, true)
     if s1 then
@@ -51,81 +35,33 @@ local function R(p, r)
     if ok then src = n end
 end
 
--- ═══════════════════════════════════════════════════════════════
---  1. ЛУНА → ПУСТАЯ (не трогаем asset, чтобы не крашить)
--- ═══════════════════════════════════════════════════════════════
+-- ЛУНА (только lucide-имена → пусто)
 R('"moon%-star"', '""')
-R("'moon%-star'", "''")
 R('"moon"', '""')
-R("'moon'", "''")
-
--- BackgroundImage с луной
 R('BackgroundImage = "[^"]*[Mm]oon[^"]*"', 'BackgroundImage = ""')
 
--- Эмодзи луны
-R('🌙', '')
-R('🌚', '')
-R('🌛', '')
-R('🌜', '')
-R('🌒', '')
-R('🌓', '')
-R('🌔', '')
-R('🌕', '')
-R('🌖', '')
-R('🌗', '')
-R('🌘', '')
-R('🌑', '')
-
--- ═══════════════════════════════════════════════════════════════
---  2. ЧЁРНЫЙ ФОН + ОРАНЖЕВЫЙ АКЦЕНТ
--- ═══════════════════════════════════════════════════════════════
+-- ЧЁРНЫЙ ФОН + ОРАНЖЕВЫЙ АКЦЕНТ
 R('BackgroundColor = Color3%.fromRGB%(15, 15, 15%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
-R('BackgroundColor = Color3%.fromRGB%(10, 10, 10%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
-R('BackgroundColor = Color3%.fromRGB%(20, 20, 20%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
 R('MainColor = Color3%.fromRGB%(25, 25, 25%)', 'MainColor = Color3.fromRGB(8, 8, 8)')
-R('MainColor = Color3%.fromRGB%(30, 30, 30%)', 'MainColor = Color3.fromRGB(8, 8, 8)')
-
 R('AccentColor = Color3%.fromRGB%(125, 85, 255%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
 R('AccentColor = Color3%.fromRGB%(255, 130, 180%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
 R('AccentColor = Color3%.fromRGB%(255, 105, 180%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
 R('AccentColor = Color3%.fromRGB%(100, 170, 255%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
-R('AccentColor = Color3%.fromRGB%(255, 255, 0%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
-
-R('OutlineColor = Color3%.fromRGB%(40, 40, 40%)', 'OutlineColor = Color3.fromRGB(40, 40, 40)')
-R('OutlineColor = Color3%.fromRGB%(70, 70, 70%)', 'OutlineColor = Color3.fromRGB(40, 40, 40)')
-
 R('FontColor = Color3%.new%(1, 1, 1%)', 'FontColor = Color3.fromRGB(255, 255, 255)')
 R('FontColor = Color3%.fromRGB%(120, 40, 90%)', 'FontColor = Color3.fromRGB(255, 255, 255)')
 R('FontColor = Color3%.fromRGB%(140, 80, 100%)', 'FontColor = Color3.fromRGB(255, 255, 255)')
+R('OutlineColor = Color3%.fromRGB%(40, 40, 40%)', 'OutlineColor = Color3.fromRGB(40, 40, 40)')
 
-R('RedColor = Color3%.fromRGB%(255, 50, 50%)', 'RedColor = Color3.fromRGB(255, 100, 60)')
-R('DestructiveColor = Color3%.fromRGB%(220, 38, 38%)', 'DestructiveColor = Color3.fromRGB(255, 80, 40)')
-
--- Хексы
-R('"0f0f0f"', '"000000"')
-R('"191919"', '"080808"')
-R('"7d55ff"', '"ff8c1e"')
-R('"64aaff"', '"ff8c1e"')
-R('"ff69b4"', '"ff8c1e"')
-R('"78285a"', '"ffffff"')
-
--- ═══════════════════════════════════════════════════════════════
---  3. AUTO-CLICKER → poses
--- ═══════════════════════════════════════════════════════════════
+-- AUTO-CLICKER → poses
 R('<b>Auto%-Clicker</b>', '<b>poses</b>')
 
--- ═══════════════════════════════════════════════════════════════
---  4. ЗВУК + NAME = "resonance"
--- ═══════════════════════════════════════════════════════════════
+-- ЗВУК NAME
 R('Volume = tonumber%(Data%.Volume%) or 3,', 'Name = "resonance", Volume = tonumber(Data.Volume) or 3,')
 
--- ═══════════════════════════════════════════════════════════════
---  5. АВТОРЫ
--- ═══════════════════════════════════════════════════════════════
+-- АВТОРЫ
 R('cracked by InLoad and wraith%.dev', 'created by qmee2')
 R('cracked by [^"]+', 'created by qmee2')
 R('cracked by [^"<]+', 'created by qmee2')
-R('dont stop using cracks! ts crack is so cool', 'created by qmee2')
 R('InLoad', 'qmee2')
 R('wraith%.dev', 'qmee2')
 R('wraith', 'qmee2')
@@ -136,7 +72,7 @@ R('AddTab%("<b>Home</b>", "house", "Profile, statistics"%)',
   'AddTab("<b><font color=\\"#FF8C1E\\">ssv</font></b>", "", "ssv")')
 R('"v2%.9"', '""')
 
--- Resonance → ssv
+-- Resonance → ssv (защита служебных)
 local pr = {"ResonanceRunning","ResonanceStarting","ResonanceOriginalFallenHeight","ResonanceRestored","ResonanceIntro"}
 local rs = {}
 for i, nm in ipairs(pr) do
@@ -146,14 +82,12 @@ for i, nm in ipairs(pr) do
 end
 src = src:gsub("Resonance", "ssv")
 src = src:gsub("RESONANCE", "SSV")
-src = src:gsub("Project ssv", "ssv")
 for k, nm in pairs(rs) do src = src:gsub(k, nm) end
 
 R('cracked', 'created')
 R('crack', 'ssv')
 R('Crack', 'Ssv')
 R('CRACK', 'SSV')
-R('ssv%s+ssv', 'ssv')
 
 -- ЗАПУСК
 local chunk, cerr = loadstring(src, "@ssv")
@@ -161,32 +95,18 @@ if not chunk then error("[ssv] compile: " .. tostring(cerr), 0) end
 local rok, rerr = pcall(chunk)
 if not rok then error("[ssv] run: " .. tostring(rerr), 0) end
 
--- ═══════════════════════════════════════════════════════════════
---  6. ПОСТ-ОБРАБОТКА (безопасно): убираем фон с луной
--- ═══════════════════════════════════════════════════════════════
+-- Пост-обработка: убираем фон с луной
 task.spawn(function()
     task.wait(6)
     pcall(function()
         local cg = game:GetService("CoreGui")
         local obsidian = cg:FindFirstChild("Obsidian")
         if not obsidian then return end
-
         for _, d in ipairs(obsidian:GetDescendants()) do
-            if d:IsA("ImageLabel") then
-                local img = tostring(d.Image or "")
-                if img:find("79685", 1, true) then
-                    d.Image = ""
-                    d.Visible = false
-                end
-                if img:find("79685990879972", 1, true) then
-                    d.Image = ""
-                    d.Visible = false
-                end
+            if d:IsA("ImageLabel") and tostring(d.Image or ""):find("79685", 1, true) then
+                d.Image = ""
+                d.Visible = false
             end
         end
     end)
 end)
-
-if type(writefile) == "function" then
-    pcall(writefile, "ssvRestart.lua", 'loadstring(game:HttpGet("' .. _uf .. '"))()')
-end
