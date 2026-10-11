@@ -22,6 +22,29 @@ do
     if syn and type(syn.queue_on_teleport) == "function" then syn.queue_on_teleport = _w(syn.queue_on_teleport) end
 end
 
+-- ═══════════════════════════════════════════════════════════════
+--  ЗАГРУЖАЕМ КАРТИНКУ ЧЁРНОЙ ДЫРЫ (blackhole.png)
+-- ═══════════════════════════════════════════════════════════════
+local BLACKHOLE_ASSET = nil
+do
+    -- Пробуем несколько имён файла
+    local names = {"blackhole.png", "blackhole.jpg", "blackhole.jpeg", "black hole.png", "bg.png"}
+    for _, n in ipairs(names) do
+        if type(isfile) == "function" and isfile(n) and type(getcustomasset) == "function" then
+            local ok, id = pcall(getcustomasset, n)
+            if ok and id then
+                BLACKHOLE_ASSET = id
+                print("[ssv] ✓ Загружена картинка: " .. n)
+                break
+            end
+        end
+    end
+    if not BLACKHOLE_ASSET then
+        warn("[ssv] blackhole.png не найден в workspace — используется резервный asset")
+        BLACKHOLE_ASSET = "rbxassetid://16104850011"
+    end
+end
+
 -- ═══ ЗАГРУЗКА ═══
 local function _g(u)
     if type(request) == "function" then
@@ -52,13 +75,10 @@ local function R(p, r)
 end
 
 -- ═══════════════════════════════════════════════════════════════
---  1. УДАЛЯЕМ ВСЕ ЛУНЫ ИЗ КОДА
+--  1. УБИРАЕМ БЕЛУЮ ЛУНУ ВЕЗДЕ
 -- ═══════════════════════════════════════════════════════════════
--- Roblox asset луны
 R('79685990879972', '0')
 R('rbxassetid://79685990879972', 'rbxassetid://0')
-
--- Lucide имена луны → пусто (пустая иконка, не крашит)
 R('"moon%-star"', '""')
 R("'moon%-star'", "''")
 R('"moon"', '""')
@@ -66,11 +86,7 @@ R("'moon'", "''")
 R('"Moon"', '""')
 R("'Moon'", "''")
 
--- BackgroundImage с луной → пусто
-R('BackgroundImage = "[^"]*[Mm]oon[^"]*"', 'BackgroundImage = ""')
-R("BackgroundImage = '[^']*[Mm]oon[^']*'", "BackgroundImage = ''")
-
--- Все эмодзи луны (через байты)
+-- Все эмодзи луны
 R('\240\159\140\145', '')
 R('\240\159\140\146', '')
 R('\240\159\140\147', '')
@@ -87,7 +103,18 @@ R('\240\159\140\157', '')
 R('\240\159\140\158', '')
 
 -- ═══════════════════════════════════════════════════════════════
---  2. УДАЛЯЕМ ПОВТОРЯЮЩИЕСЯ qmee2 / ssv (в коде)
+--  2. ВСТАВЛЯЕМ ЧЁРНУЮ ДЫРУ КАК ФОН ОКНА
+--  Подменяем BackgroundImage на нашу картинку
+-- ═══════════════════════════════════════════════════════════════
+-- Если уже был BackgroundImage — перезапишем
+R('BackgroundImage = "[^"]*"', 'BackgroundImage = "' .. BLACKHOLE_ASSET .. '"')
+R("BackgroundImage = '[^']*'", "BackgroundImage = '" .. BLACKHOLE_ASSET .. "'")
+
+-- Если BackgroundImage не было — добавляем в тему
+R('BackgroundImage = ""', 'BackgroundImage = "' .. BLACKHOLE_ASSET .. '"')
+
+-- ═══════════════════════════════════════════════════════════════
+--  3. ПОВТОРЫ qmee2 / ssv
 -- ═══════════════════════════════════════════════════════════════
 local function collapse(text, word)
     local iter = 0
@@ -109,42 +136,33 @@ end
 
 src = collapse(src, "qmee2")
 src = collapse(src, "ssv")
-
--- Явные случаи
 R('created by qmee2 and qmee2', 'created by qmee2')
 R('by qmee2 and qmee2', 'by qmee2')
-R('created by qmee2 qmee2', 'created by qmee2')
-R('ssv and ssv', 'ssv')
 R('ssv ssv', 'ssv')
 
 -- ═══════════════════════════════════════════════════════════════
---  3. СИНЯЯ ТЕМА (потом заменишь на свою)
+--  4. ТЁМНАЯ ТЕМА ПОД ЧЁРНУЮ ДЫРУ (чёрный + оранжевый)
 -- ═══════════════════════════════════════════════════════════════
-R('BackgroundColor = Color3%.fromRGB%(15, 15, 15%)', 'BackgroundColor = Color3.fromRGB(4, 6, 12)')
-R('BackgroundColor = Color3%.fromRGB%(10, 10, 10%)', 'BackgroundColor = Color3.fromRGB(4, 6, 12)')
-R('MainColor = Color3%.fromRGB%(25, 25, 25%)', 'MainColor = Color3.fromRGB(12, 16, 28)')
-R('MainColor = Color3%.fromRGB%(30, 30, 30%)', 'MainColor = Color3.fromRGB(12, 16, 28)')
+R('BackgroundColor = Color3%.fromRGB%(15, 15, 15%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
+R('BackgroundColor = Color3%.fromRGB%(10, 10, 10%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
+R('BackgroundColor = Color3%.fromRGB%(20, 20, 20%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
+R('MainColor = Color3%.fromRGB%(25, 25, 25%)', 'MainColor = Color3.fromRGB(10, 8, 5)')
+R('MainColor = Color3%.fromRGB%(30, 30, 30%)', 'MainColor = Color3.fromRGB(10, 8, 5)')
 R('AccentColor = Color3%.fromRGB%(125, 85, 255%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
 R('AccentColor = Color3%.fromRGB%(255, 130, 180%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
 R('AccentColor = Color3%.fromRGB%(255, 105, 180%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
 R('AccentColor = Color3%.fromRGB%(255, 255, 0%)', 'AccentColor = Color3.fromRGB(255, 140, 30)')
-R('OutlineColor = Color3%.fromRGB%(40, 40, 40%)', 'OutlineColor = Color3.fromRGB(50, 35, 25)')
-R('OutlineColor = Color3%.fromRGB%(70, 70, 70%)', 'OutlineColor = Color3.fromRGB(50, 35, 25)')
+R('OutlineColor = Color3%.fromRGB%(40, 40, 40%)', 'OutlineColor = Color3.fromRGB(60, 35, 15)')
+R('OutlineColor = Color3%.fromRGB%(70, 70, 70%)', 'OutlineColor = Color3.fromRGB(60, 35, 15)')
 R('FontColor = Color3%.new%(1, 1, 1%)', 'FontColor = Color3.fromRGB(255, 220, 180)')
 R('FontColor = Color3%.fromRGB%(120, 40, 90%)', 'FontColor = Color3.fromRGB(255, 220, 180)')
 R('RedColor = Color3%.fromRGB%(255, 50, 50%)', 'RedColor = Color3.fromRGB(255, 100, 60)')
 R('DestructiveColor = Color3%.fromRGB%(220, 38, 38%)', 'DestructiveColor = Color3.fromRGB(255, 80, 40)')
-R('"0f0f0f"', '"04060c"')
-R('"191919"', '"0c101c"')
-R('"7d55ff"', '"ff8c1e"')
-R('"282828"', '"32231a"')
-R('"ff69b4"', '"ff8c1e"')
-R('"78285a"', '"ffdcb4"')
 
 -- Auto-Clicker → poses
 R('<b>Auto%-Clicker</b>', '<b>poses</b>')
 
--- Звук + Name = "resonance"
+-- Звук + Name
 R('Volume = tonumber%(Data%.Volume%) or 3,', 'Name = "resonance", Volume = tonumber(Data.Volume) or 3,')
 
 -- Авторы
@@ -157,12 +175,10 @@ R('wraith', 'qmee2')
 R('<b>Resonance</b>', '<b>ssv</b>')
 R('"Resonance %%s', '"ssv %%s')
 R('or "Resonance"', 'or "ssv"')
--- Home — без иконки, чисто "ssv"
 R('AddTab%("<b>Home</b>", "house", "Profile, statistics"%)',
   'AddTab("<b>ssv</b>", "", "ssv")')
 R('"v2%.9"', '""')
 
--- Resonance → ssv (защита служебных)
 local pr = {"ResonanceRunning","ResonanceStarting","ResonanceOriginalFallenHeight","ResonanceRestored","ResonanceIntro"}
 local rs = {}
 for i, nm in ipairs(pr) do
@@ -179,28 +195,21 @@ R('cracked', 'created')
 R('crack', 'ssv')
 R('Crack', 'Ssv')
 R('CRACK', 'SSV')
-
--- Финальная зачистка повторов
 src = collapse(src, "qmee2")
 src = collapse(src, "ssv")
 
--- ═══════════════════════════════════════════════════════════════
---  4. ЗАПУСК
--- ═══════════════════════════════════════════════════════════════
+-- ═══ ЗАПУСК ═══
 local chunk, cerr = loadstring(src, "@ssv")
 if not chunk then error("[ssv] compile: " .. tostring(cerr), 0) end
 local rok, rerr = pcall(chunk)
 if not rok then error("[ssv] run: " .. tostring(rerr), 0) end
 
 -- ═══════════════════════════════════════════════════════════════
---  5. ПОСТ-ОБРАБОТКА: чистим UI — ищем Obsidian ВЕЗДЕ
---  Удаляем:
---   - луну по asset 79685990879972
---   - все ImageLabel с "moon"/"luna" в имени
---   - большой фон (>1000×500)
---   - повторы qmee2/ssv в текстах
+--  5. ПОСТ-ОБРАБОТКА UI
+--  - Удаляем белую луну везде
+--  - Ставим чёрную дыру на фон главного окна
+--  - Убираем повторы qmee2/ssv
 -- ═══════════════════════════════════════════════════════════════
-
 local function getAllObs()
     local list = {}
     local cg = game:GetService("CoreGui")
@@ -216,20 +225,18 @@ local function cleanObs(obs)
     if not obs then return end
 
     for _, d in ipairs(obs:GetDescendants()) do
-        -- Картинки
         if d:IsA("ImageLabel") or d:IsA("ImageButton") then
             local img = tostring(d.Image or "")
             local low = img:lower()
             local full = d:GetFullName():lower()
             local sz = d.AbsoluteSize
 
-            -- Луна: asset 79685* / moon в asset / moon/luna в пути
+            -- БЕЛАЯ ЛУНА: asset 79685* / moon / luna в имени
             local is_moon = false
             if img:find("79685", 1, true) then is_moon = true end
             if low:find("moon", 1, true) then is_moon = true end
             if low:find("luna", 1, true) then is_moon = true end
             if full:find("moon", 1, true) then is_moon = true end
-            if full:find("luna", 1, true) then is_moon = true end
 
             if is_moon then
                 d.Image = ""
@@ -238,11 +245,12 @@ local function cleanObs(obs)
                 d.BackgroundTransparency = 1
             end
 
-            -- Большой фон (>1000×500)
+            -- БОЛЬШОЙ ФОН — заменяем на чёрную дыру
             if sz.X > 1000 or sz.Y > 500 then
-                d.Image = ""
-                d.ImageTransparency = 1
-                d.Visible = false
+                d.Image = BLACKHOLE_ASSET
+                d.ImageTransparency = 0.35
+                d.Visible = true
+                d.ScaleType = Enum.ScaleType.Crop
                 d.BackgroundTransparency = 1
             end
         end
@@ -268,18 +276,18 @@ local function cleanObs(obs)
         end
     end
 
-    -- Фон главного окна (прямой ребёнок Obsidian)
+    -- Фон главного окна — ставим чёрную дыру
     for _, c in ipairs(obs:GetChildren()) do
         if c:IsA("ImageLabel") then
-            c.Image = ""
-            c.ImageTransparency = 1
-            c.Visible = false
-            c.BackgroundTransparency = 1
+            c.Image = BLACKHOLE_ASSET
+            c.ImageTransparency = 0.4
+            c.Visible = true
+            c.ScaleType = Enum.ScaleType.Crop
         end
     end
 end
 
--- Запускаем зачистку несколько раз — UI строится поэтапно
+-- Запускаем зачистку несколько раз
 for _, delay in ipairs({2, 4, 6, 8, 12, 16, 22, 30}) do
     task.delay(delay, function()
         pcall(function()
@@ -290,7 +298,7 @@ for _, delay in ipairs({2, 4, 6, 8, 12, 16, 22, 30}) do
     end)
 end
 
--- Слушаем новые Obsidian и новые картинки внутри них
+-- Следим за новыми Obsidian и новыми картинками
 task.spawn(function()
     pcall(function()
         local cg = game:GetService("CoreGui")
@@ -323,10 +331,10 @@ task.spawn(function()
                                     d.Visible = false
                                 end
                                 if sz.X > 1000 or sz.Y > 500 then
-                                    d.Image = ""
-                                    d.ImageTransparency = 1
-                                    d.Visible = false
-                                    d.BackgroundTransparency = 1
+                                    d.Image = BLACKHOLE_ASSET
+                                    d.ImageTransparency = 0.4
+                                    d.Visible = true
+                                    d.ScaleType = Enum.ScaleType.Crop
                                 end
                             end)
                         end
@@ -337,7 +345,7 @@ task.spawn(function()
     end)
 end)
 
--- Звук — переименовываем в SoundService
+-- Звук → resonance
 task.spawn(function()
     for _ = 1, 30 do
         task.wait(1)
