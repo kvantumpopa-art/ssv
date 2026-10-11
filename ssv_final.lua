@@ -48,68 +48,91 @@ local function R(p, r)
 end
 
 -- ═══════════════════════════════════════════════════════════════
---  УБИРАЕМ ЛУНУ АБСОЛЮТНО ВЕЗДЕ
+--  УДАЛЯЕМ ЛУНУ АБСОЛЮТНО ВЕЗДЕ
 -- ═══════════════════════════════════════════════════════════════
 
--- 1. Roblox asset луны → 0 (пусто)
+-- 1. Roblox asset ID луны
 R('79685990879972', '0')
-R('rbxassetid://79685990879972', 'rbxassetid://0')
 
--- 2. ВСЕ упоминания "moon" в ЛЮБОМ регистре → пусто
-local ok1, new1 = pcall(function()
-    return src:gsub('[Mm][Oo][Oo][Nn]%-?[Ss][Tt][Aa][Rr]?', '')
+-- 2. Убираем ЛЮБОЕ слово moon в любом регистре (включая moon-star, MoonStar)
+local ok, new = pcall(function()
+    return src:gsub('[Mm][Oo][Oo][Nn]', '')
 end)
-if ok1 and type(new1) == "string" then src = new1 end
+if ok and type(new) == "string" then src = new end
 
--- Ещё раз для "Moon", "MOON", оставшихся
-R('[Mm][Oo][Oo][Nn]', '')
-R('Luna', '')
-R('luna', '')
-R('LUNA', '')
+-- 3. Luna
+R('[Ll][Uu][Nn][Aa]', '')
 
--- 3. Фон: любой BackgroundImage с чем угодно → пусто
+-- 4. Все эмодзи луны через сырые байты UTF-8
+local EMOJI = {
+    "\240\159\140\145", -- 🌑
+    "\240\159\140\146", -- 🌒
+    "\240\159\140\147", -- 🌓
+    "\240\159\140\148", -- 🌔
+    "\240\159\140\149", -- 🌕
+    "\240\159\140\150", -- 🌖
+    "\240\159\140\151", -- 🌗
+    "\240\159\140\152", -- 🌘
+    "\240\159\140\153", -- 🌙
+    "\240\159\140\154", -- 🌚
+    "\240\159\140\155", -- 🌛
+    "\240\159\140\156", -- 🌜
+    "\240\159\140\157", -- 🌝
+    "\240\159\140\158", -- 🌞
+}
+for _, e in ipairs(EMOJI) do
+    R(e, '')
+end
+
+-- 5. Любой BackgroundImage → пусто (если он содержит moon - уже удалён, но на всякий)
+-- Работаем через функцию: убираем ТОЛЬКО если там что-то есть
 local ok_bg, new_bg = pcall(function()
-    return src:gsub('BackgroundImage%s*=%s*"[^"]*"', 'BackgroundImage = ""')
+    return src:gsub('BackgroundImage%s*=%s*"[^"]+"', 'BackgroundImage = ""')
 end)
 if ok_bg and type(new_bg) == "string" then src = new_bg end
 
 local ok_bg2, new_bg2 = pcall(function()
-    return src:gsub("BackgroundImage%s*=%s*'[^']*'", "BackgroundImage = ''")
+    return src:gsub("BackgroundImage%s*=%s*'[^']+'", "BackgroundImage = ''")
 end)
 if ok_bg2 and type(new_bg2) == "string" then src = new_bg2 end
 
--- 4. Эмодзи луны (через байты UTF-8)
-R('\240\159\140\153', '')
-R('\240\159\140\154', '')
-R('\240\159\140\155', '')
-R('\240\159\140\156', '')
-R('\240\159\140\146', '')
-R('\240\159\140\147', '')
-R('\240\159\140\148', '')
-R('\240\159\140\149', '')
-R('\240\159\140\150', '')
-R('\240\159\140\151', '')
-R('\240\159\140\152', '')
-R('\240\159\140\145', '')
+-- ═══════════════════════════════════════════════════════════════
+--  УДАЛЯЕМ ВСЕ ПОВТОРЫ qmee2 и ssv (ЦИКЛОМ, пока не исчезнут)
+-- ═══════════════════════════════════════════════════════════════
 
--- ═══════════════════════════════════════════════════════════════
---  УБИРАЕМ ДУБЛИ
--- ═══════════════════════════════════════════════════════════════
-R('qmee2%s+qmee2', 'qmee2')
-R('qmee2qmee2', 'qmee2')
-R('qmee2•qmee2', 'qmee2')
-R('qmee2%.qmee2', 'qmee2')
-R('qmee2%-qmee2', 'qmee2')
-R('qmee2_qmee2', 'qmee2')
-R('qmee2/qmee2', 'qmee2')
+-- Функция схлопывания повторов через цикл
+local function collapse(text, word)
+    local max_iter = 20
+    local i = 0
+    while i < max_iter do
+        i = i + 1
+        local ok1, new1 = pcall(function()
+            -- слово + любые разделители + то же слово → одно слово
+            return text:gsub(word .. "[%s%p]+" .. word, word)
+        end)
+        if ok1 and type(new1) == "string" and new1 ~= text then
+            text = new1
+        else
+            break
+        end
+    end
+    -- Двойное без разделителя (qmee2qmee2 → qmee2)
+    local ok2, new2 = pcall(function()
+        return text:gsub(word .. word, word)
+    end)
+    if ok2 and type(new2) == "string" then text = new2 end
+    return text
+end
+
+src = collapse(src, "qmee2")
+src = collapse(src, "ssv")
+
+-- Отдельно: "created by qmee2 and qmee2" → "created by qmee2"
 R('created by qmee2 and qmee2', 'created by qmee2')
 R('by qmee2 and qmee2', 'by qmee2')
 
-local ok_ssv, new_ssv = pcall(function()
-    return src:gsub('ssv([%s•%.%-/_]+)ssv', 'ssv')
-end)
-if ok_ssv and type(new_ssv) == "string" then src = new_ssv end
-R('ssvssv', 'ssv')
+-- "by X qmee2" — убираем хвост
+R('by qmee2%s+qmee2', 'by qmee2')
 
 -- ═══════════════════════════════════════════════════════════════
 --  ТЕМА: чёрный фон + оранжевый + белый
@@ -138,7 +161,6 @@ R('Volume = tonumber%(Data%.Volume%) or 3,', 'Name = "resonance", Volume = tonum
 R('cracked by InLoad and wraith%.dev', 'created by qmee2')
 R('cracked by [^"]+', 'created by qmee2')
 R('cracked by [^"<]+', 'created by qmee2')
-R('dont stop using cracks! ts crack is so cool', 'created by qmee2')
 R('InLoad', 'qmee2')
 R('wraith%.dev', 'qmee2')
 R('wraith', 'qmee2')
@@ -147,7 +169,7 @@ R('"Resonance %%s', '"ssv %%s')
 R('or "Resonance"', 'or "ssv"')
 R('"v2%.9"', '""')
 
--- Resonance → ssv (защита)
+-- Resonance → ssv (защита служебных)
 local pr = {"ResonanceRunning","ResonanceStarting","ResonanceOriginalFallenHeight","ResonanceRestored","ResonanceIntro"}
 local rs = {}
 for i, nm in ipairs(pr) do
@@ -163,10 +185,8 @@ R('cracked', 'created')
 R('crack', 'ssv')
 
 -- Финальная зачистка дублей
-R('qmee2%s+qmee2', 'qmee2')
-R('ssv%s+ssv', 'ssv')
-R('qmee2qmee2', 'qmee2')
-R('ssvssv', 'ssv')
+src = collapse(src, "qmee2")
+src = collapse(src, "ssv")
 
 -- ЗАПУСК
 local chunk, cerr = loadstring(src, "@ssv")
@@ -175,38 +195,50 @@ local rok, rerr = pcall(chunk)
 if not rok then error("[ssv] run: " .. tostring(rerr), 0) end
 
 -- ═══════════════════════════════════════════════════════════════
---  ПОСТ-ОБРАБОТКА — жёсткая зачистка луны в UI
+--  ПОСТ-ОБРАБОТКА — чистим UI от луны и повторов в рантайме
 -- ═══════════════════════════════════════════════════════════════
 task.spawn(function()
-    task.wait(6)
+    task.wait(5)
     pcall(function()
         local cg = game:GetService("CoreGui")
         local obsidian = cg:FindFirstChild("Obsidian")
         if not obsidian then return end
 
         for _, d in ipairs(obsidian:GetDescendants()) do
-            -- ImageLabel / ImageButton с asset луны
+            -- Image с луной
             if d:IsA("ImageLabel") or d:IsA("ImageButton") then
                 local img = tostring(d.Image or "")
-                if img:find("79685", 1, true) or img:find("moon", 1, true) or img:find("Moon", 1, true) then
+                if img:find("79685", 1, true) or img:find("moon", 1, true) or img:find("Moon", 1, true) or img:find("luna", 1, true) then
                     d.Image = ""
                     d.Visible = false
-                    d.BackgroundTransparency = 1
                 end
             end
             -- Текст с эмодзи луны
             if d:IsA("TextLabel") or d:IsA("TextButton") then
                 local t = tostring(d.Text or "")
-                if t:find("\240\159\140\153") or t:find("\240\159\140\145") then
-                    d.Text = ""
+                for _, e in ipairs({"🌙","🌚","🌛","🌜","🌑","🌒","🌓","🌔","🌕","🌖","🌗","🌘","🌝","🌞"}) do
+                    if t:find(e, 1, true) then
+                        d.Text = t:gsub(e, "")
+                        t = d.Text
+                    end
                 end
-            end
-            -- Большие декоративные фоны (если это фон главного окна с moon)
-            if d:IsA("ImageLabel") and d.Name:lower():find("bg") then
-                if d.Size.X.Scale >= 0.9 and d.Size.Y.Scale >= 0.9 then
-                    d.Image = ""
-                    d.Visible = false
+                -- Убираем повторы qmee2 в тексте
+                local new = t
+                local iter = 0
+                while iter < 20 do
+                    iter = iter + 1
+                    local nn = new:gsub("qmee2[%s%p]+qmee2", "qmee2"):gsub("qmee2qmee2", "qmee2")
+                    if nn == new then break end
+                    new = nn
                 end
+                local iter2 = 0
+                while iter2 < 20 do
+                    iter2 = iter2 + 1
+                    local nn = new:gsub("ssv[%s%p]+ssv", "ssv"):gsub("ssvssv", "ssv")
+                    if nn == new then break end
+                    new = nn
+                end
+                if new ~= t then d.Text = new end
             end
         end
     end)
