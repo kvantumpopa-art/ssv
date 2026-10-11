@@ -1,4 +1,79 @@
--- ssv | created by qmee2
+-- ═══════════════════════════════════════════════════════════════
+--  ЗАЧИСТКА: удаляем ЛУНУ и ФОН из Obsidian
+-- ═══════════════════════════════════════════════════════════════
+task.spawn(function()
+    -- Ждём пока окно построится
+    task.wait(5)
+    
+    -- Убираем картинки с asset луны И большой фон
+    local function clean()
+        pcall(function()
+            local cg = game:GetService("CoreGui")
+            local obs = cg:FindFirstChild("Obsidian")
+            if not obs then return end
+            
+            local moon_id = "79685990879972"
+            
+            for _, d in ipairs(obs:GetDescendants()) do
+                if d:IsA("ImageLabel") or d:IsA("ImageButton") then
+                    local img = tostring(d.Image or "")
+                    
+                    -- 1. Убираем ЛУНУ (asset 79685990879972)
+                    if img:find(moon_id, 1, true) then
+                        d.Image = ""
+                        d.Visible = false
+                        d.ImageTransparency = 1
+                    end
+                    
+                    -- 2. Убираем БОЛЬШОЙ ФОН (1505x719 или любой >1000px)
+                    local sz = d.AbsoluteSize
+                    if sz.X > 1000 or sz.Y > 500 then
+                        d.Image = ""
+                        d.Visible = false
+                        d.ImageTransparency = 1
+                        d.BackgroundTransparency = 1
+                    end
+                    
+                    -- 3. Убираем фон окна (Obsidian.ImageLabel — прямой ребёнок)
+                    if d.Parent == obs and d.Name == "ImageLabel" then
+                        d.Image = ""
+                        d.Visible = false
+                        d.ImageTransparency = 1
+                        d.BackgroundTransparency = 1
+                    end
+                end
+            end
+            
+            -- Чистим тексты от повторов qmee2 и ssv
+            for _, d in ipairs(obs:GetDescendants()) do
+                if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then
+                    local t = tostring(d.Text or "")
+                    if t:find("qmee2") or t:find("ssv") then
+                        local new = t
+                        local i = 0
+                        while i < 15 do
+                            i = i + 1
+                            local nn = new:gsub("qmee2[%s%p]+qmee2", "qmee2")
+                                          :gsub("qmee2qmee2", "qmee2")
+                                          :gsub("ssv[%s%p]+ssv", "ssv")
+                                          :gsub("ssvssv", "ssv")
+                            if nn == new then break end
+                            new = nn
+                        end
+                        if new ~= t then d.Text = new end
+                    end
+                end
+            end
+        end)
+    end
+    
+    -- Чистим сразу и через 3 секунды повторно (на случай перестройки UI)
+    clean()
+    task.wait(3)
+    clean()
+    task.wait(5)
+    clean()
+end)-- ssv | created by qmee2
 local _0 = getgenv and getgenv() or _G
 _0.ResonanceRunning = nil
 _0.ResonanceStarting = nil
