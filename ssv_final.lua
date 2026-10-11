@@ -363,3 +363,132 @@ end)
 if type(writefile) == "function" then
     pcall(writefile, "ssvRestart.lua", 'loadstring(game:HttpGet("' .. _uf .. '"))()')
 end
+-- ═══════════════════════════════════════════════════════════════
+--  ПОСТ-ОБРАБОТКА UI — убираем луну + ставим чёрную дыру
+-- ═══════════════════════════════════════════════════════════════
+
+-- Загружаем картинку чёрной дыры
+local BH_ASSET = nil
+if type(isfile) == "function" and type(getcustomasset) == "function" then
+    for _, n in ipairs({"blackhole.png", "blackhole.jpg", "blackhole.jpeg", "bg.png"}) do
+        if isfile(n) then
+            local ok, id = pcall(getcustomasset, n)
+            if ok and id then BH_ASSET = id break end
+        end
+    end
+end
+
+if BH_ASSET then
+    warn("[ssv] Фон: " .. BH_ASSET)
+else
+    warn("[ssv] blackhole.png не найден в workspace")
+end
+
+local function clean()
+    pcall(function()
+        local cg = game:GetService("CoreGui")
+        for _, obs in ipairs(cg:GetDescendants()) do
+            if obs.Name == "Obsidian" and (obs:IsA("ScreenGui") or obs:IsA("Folder")) then
+                -- 1. Скрываем луну везде
+                for _, d in ipairs(obs:GetDescendants()) do
+                    if d:IsA("ImageLabel") or d:IsA("ImageButton") then
+                        local img = tostring(d.Image or "")
+                        local full = d:GetFullName()
+                        local sz = d.AbsoluteSize
+                        
+                        -- Луна (asset 0 / пусто / 79685) — маленькие иконки
+                        if (img == "" or img == "rbxassetid://0" or img:find("79685", 1, true)) then
+                            if sz.X <= 40 and sz.Y <= 40 then
+                                d.Visible = false
+                                d.ImageTransparency = 1
+                            end
+                        end
+                        
+                        -- Явные луны по пути
+                        if full:find("Obsidian.Frame.TextLabel.ImageLabel", 1, true) 
+                           or full:find("Obsidian.Main.Frame.Frame.ImageLabel", 1, true) then
+                            d.Visible = false
+                            d.ImageTransparency = 1
+                        end
+                        
+                        -- 2. Большой фон — заменяем на чёрную дыру
+                        if sz.X > 1000 or sz.Y > 500 then
+                            if BH_ASSET then
+                                d.Image = BH_ASSET
+                                d.ImageTransparency = 0.4
+                                d.ScaleType = Enum.ScaleType.Crop
+                                d.Visible = true
+                                d.BackgroundTransparency = 1
+                            else
+                                d.Image = ""
+                                d.ImageTransparency = 1
+                                d.Visible = false
+                            end
+                        end
+                    end
+                    
+                    -- Тексты — убираем повторы qmee2/ssv
+                    if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then
+                        local t = tostring(d.Text or "")
+                        if t:find("qmee2") or t:find("ssv") then
+                            local new = t
+                            local i = 0
+                            while i < 15 do
+                                i = i + 1
+                                local nn = new
+                                    :gsub("qmee2[%s%p]+qmee2", "qmee2")
+                                    :gsub("qmee2qmee2", "qmee2")
+                                    :gsub("ssv[%s%p]+ssv", "ssv")
+                                    :gsub("ssvssv", "ssv")
+                                if nn == new then break end
+                                new = nn
+                            end
+                            if new ~= t then d.Text = new end
+                        end
+                    end
+                end
+            end
+        end
+    end)
+end
+
+-- Чистим много раз — UI строится поэтапно
+for _, delay in ipairs({2, 4, 6, 8, 12, 16, 22, 30}) do
+    task.delay(delay, clean)
+end
+
+-- Следим за новыми ImageLabel
+task.spawn(function()
+    task.wait(3)
+    pcall(function()
+        local cg = game:GetService("CoreGui")
+        for _, obs in ipairs(cg:GetDescendants()) do
+            if obs.Name == "Obsidian" and (obs:IsA("ScreenGui") or obs:IsA("Folder")) then
+                obs.DescendantAdded:Connect(function(d)
+                    if d:IsA("ImageLabel") or d:IsA("ImageButton") then
+                        task.wait(0.1)
+                        pcall(function()
+                            local img = tostring(d.Image or "")
+                            local sz = d.AbsoluteSize
+                            if (img == "" or img == "rbxassetid://0" or img:find("79685", 1, true)) 
+                               and sz.X <= 40 and sz.Y <= 40 then
+                                d.Visible = false
+                                d.ImageTransparency = 1
+                            end
+                            if sz.X > 1000 or sz.Y > 500 then
+                                if BH_ASSET then
+                                    d.Image = BH_ASSET
+                                    d.ImageTransparency = 0.4
+                                    d.ScaleType = Enum.ScaleType.Crop
+                                    d.Visible = true
+                                else
+                                    d.Visible = false
+                                end
+                            end
+                        end)
+                    end
+                end)
+            end
+        end
+    end)
+end)
