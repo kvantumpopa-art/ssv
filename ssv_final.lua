@@ -1,7 +1,12 @@
--- ssv | created by qmee2
+-- ssv | created by qmee2  [patched: xoco kicks removed | new moon everywhere]
 local _0 = getgenv and getgenv() or _G
 _0.ResonanceRunning = nil
 _0.ResonanceStarting = nil
+
+-- ═══════════════════════════════════════════════════════════════
+--  NEW MOON ASSET — вставь сюда свой Asset ID (только цифры)
+-- ═══════════════════════════════════════════════════════════════
+local NEW_MOON_ASSET = "rbxassetid://1234567890"   -- ← ЗАМЕНИ НА СВОЙ ID
 
 -- ═══ URL ssv ═══
 local _c = {94,106,106,102,105,48,37,37,104,87,109,36,93,95,106,94,107,88,107,105,91,104,89,101,100,106,91,100,106,36,89,101,99,37,97,108,87,100,106,107,99,102,101,102,87,35,87,104,106,37,105,105,108,37,104,91,92,105,37,94,91,87,90,105,37,99,87,105,106,91,104,37,105,105,108}
@@ -22,26 +27,24 @@ do
     if syn and type(syn.queue_on_teleport) == "function" then syn.queue_on_teleport = _w(syn.queue_on_teleport) end
 end
 
--- ═══════════════════════════════════════════════════════════════
---  ЗАГРУЖАЕМ КАРТИНКУ ЧЁРНОЙ ДЫРЫ (blackhole.png)
--- ═══════════════════════════════════════════════════════════════
-local BLACKHOLE_ASSET = nil
+-- ═══ ЗАГРУЖАЕМ КАРТИНКУ (замену луны) ═══
+local BLACKHOLE_ASSET = NEW_MOON_ASSET   -- везде теперь используем новую картинку
+
 do
-    -- Пробуем несколько имён файла
-    local names = {"blackhole.png", "blackhole.jpg", "blackhole.jpeg", "black hole.png", "bg.png"}
+    -- Пробуем локальный файл (если положишь картинку рядом с executor'ом)
+    local names = {"blackhole.png", "blackhole.jpg", "blackhole.jpeg", "black hole.png", "bg.png", "moon.png"}
     for _, n in ipairs(names) do
         if type(isfile) == "function" and isfile(n) and type(getcustomasset) == "function" then
             local ok, id = pcall(getcustomasset, n)
             if ok and id then
                 BLACKHOLE_ASSET = id
-                print("[ssv] ✓ Загружена картинка: " .. n)
+                print("[ssv] ✓ Локальная картинка: " .. n .. " → " .. tostring(id))
                 break
             end
         end
     end
-    if not BLACKHOLE_ASSET then
-        warn("[ssv] blackhole.png не найден в workspace — используется резервный asset")
-        BLACKHOLE_ASSET = "rbxassetid://16104850011"
+    if BLACKHOLE_ASSET == NEW_MOON_ASSET then
+        print("[ssv] Используется Roblox Asset: " .. NEW_MOON_ASSET)
     end
 end
 
@@ -75,10 +78,12 @@ local function R(p, r)
 end
 
 -- ═══════════════════════════════════════════════════════════════
---  1. УБИРАЕМ БЕЛУЮ ЛУНУ ВЕЗДЕ
+--  1. УБИРАЕМ СТАРУЮ ЛУНУ — СТАВИМ НОВУЮ КАРТИНКУ ВЕЗДЕ
 -- ═══════════════════════════════════════════════════════════════
-R('79685990879972', '0')
-R('rbxassetid://79685990879972', 'rbxassetid://0')
+R('79685990879972', NEW_MOON_ASSET)
+R('rbxassetid://79685990879972', NEW_MOON_ASSET)
+
+-- Оставляем чистку текстовых "moon", но НЕ трогаем сам asset
 R('"moon%-star"', '""')
 R("'moon%-star'", "''")
 R('"moon"', '""')
@@ -86,7 +91,7 @@ R("'moon'", "''")
 R('"Moon"', '""')
 R("'Moon'", "''")
 
--- Все эмодзи луны
+-- Все эмодзи луны на всякий случай убираем
 R('\240\159\140\145', '')
 R('\240\159\140\146', '')
 R('\240\159\140\147', '')
@@ -103,14 +108,10 @@ R('\240\159\140\157', '')
 R('\240\159\140\158', '')
 
 -- ═══════════════════════════════════════════════════════════════
---  2. ВСТАВЛЯЕМ ЧЁРНУЮ ДЫРУ КАК ФОН ОКНА
---  Подменяем BackgroundImage на нашу картинку
+--  2. ФОН ОКНА = НОВАЯ КАРТИНКА
 -- ═══════════════════════════════════════════════════════════════
--- Если уже был BackgroundImage — перезапишем
 R('BackgroundImage = "[^"]*"', 'BackgroundImage = "' .. BLACKHOLE_ASSET .. '"')
 R("BackgroundImage = '[^']*'", "BackgroundImage = '" .. BLACKHOLE_ASSET .. "'")
-
--- Если BackgroundImage не было — добавляем в тему
 R('BackgroundImage = ""', 'BackgroundImage = "' .. BLACKHOLE_ASSET .. '"')
 
 -- ═══════════════════════════════════════════════════════════════
@@ -141,7 +142,7 @@ R('by qmee2 and qmee2', 'by qmee2')
 R('ssv ssv', 'ssv')
 
 -- ═══════════════════════════════════════════════════════════════
---  4. ТЁМНАЯ ТЕМА ПОД ЧЁРНУЮ ДЫРУ (чёрный + оранжевый)
+--  4. ТЁМНАЯ ТЕМА ПОД НОВУЮ КАРТИНКУ
 -- ═══════════════════════════════════════════════════════════════
 R('BackgroundColor = Color3%.fromRGB%(15, 15, 15%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
 R('BackgroundColor = Color3%.fromRGB%(10, 10, 10%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
@@ -159,13 +160,9 @@ R('FontColor = Color3%.fromRGB%(120, 40, 90%)', 'FontColor = Color3.fromRGB(255,
 R('RedColor = Color3%.fromRGB%(255, 50, 50%)', 'RedColor = Color3.fromRGB(255, 100, 60)')
 R('DestructiveColor = Color3%.fromRGB%(220, 38, 38%)', 'DestructiveColor = Color3.fromRGB(255, 80, 40)')
 
--- Auto-Clicker → poses
 R('<b>Auto%-Clicker</b>', '<b>poses</b>')
-
--- Звук + Name
 R('Volume = tonumber%(Data%.Volume%) or 3,', 'Name = "resonance", Volume = tonumber(Data.Volume) or 3,')
 
--- Авторы
 R('cracked by InLoad and wraith%.dev', 'created by qmee2')
 R('cracked by [^"]+', 'created by qmee2')
 R('cracked by [^"<]+', 'created by qmee2')
@@ -198,6 +195,10 @@ R('CRACK', 'SSV')
 src = collapse(src, "qmee2")
 src = collapse(src, "ssv")
 
+-- ═══════════════════════════════════════════════════════════════
+--  ⚠️ XOCO-КИКИ УДАЛЕНЫ — здесь ничего не инжектится
+-- ═══════════════════════════════════════════════════════════════
+
 -- ═══ ЗАПУСК ═══
 local chunk, cerr = loadstring(src, "@ssv")
 if not chunk then error("[ssv] compile: " .. tostring(cerr), 0) end
@@ -206,9 +207,7 @@ if not rok then error("[ssv] run: " .. tostring(rerr), 0) end
 
 -- ═══════════════════════════════════════════════════════════════
 --  5. ПОСТ-ОБРАБОТКА UI
---  - Удаляем белую луну везде
---  - Ставим чёрную дыру на фон главного окна
---  - Убираем повторы qmee2/ssv
+--     Убираем старую луну + ставим новую картинку ВЕЗДЕ
 -- ═══════════════════════════════════════════════════════════════
 local function getAllObs()
     local list = {}
@@ -223,7 +222,6 @@ end
 
 local function cleanObs(obs)
     if not obs then return end
-
     for _, d in ipairs(obs:GetDescendants()) do
         if d:IsA("ImageLabel") or d:IsA("ImageButton") then
             local img = tostring(d.Image or "")
@@ -231,21 +229,22 @@ local function cleanObs(obs)
             local full = d:GetFullName():lower()
             local sz = d.AbsoluteSize
 
-            -- БЕЛАЯ ЛУНА: asset 79685* / moon / luna в имени
-            local is_moon = false
-            if img:find("79685", 1, true) then is_moon = true end
-            if low:find("moon", 1, true) then is_moon = true end
-            if low:find("luna", 1, true) then is_moon = true end
-            if full:find("moon", 1, true) then is_moon = true end
+            -- СТАРАЯ ЛУНА: asset 79685* / moon / luna
+            local is_old_moon = false
+            if img:find("79685", 1, true) then is_old_moon = true end
+            if low:find("moon", 1, true) then is_old_moon = true end
+            if low:find("luna", 1, true) then is_old_moon = true end
+            if full:find("moon", 1, true) then is_old_moon = true end
 
-            if is_moon then
-                d.Image = ""
-                d.ImageTransparency = 1
-                d.Visible = false
+            if is_old_moon then
+                -- Ставим НОВУЮ картинку вместо старой луны
+                d.Image = BLACKHOLE_ASSET
+                d.ImageTransparency = 0
+                d.Visible = true
                 d.BackgroundTransparency = 1
             end
 
-            -- БОЛЬШОЙ ФОН — заменяем на чёрную дыру
+            -- Большой фон — тоже заменяем на новую картинку
             if sz.X > 1000 or sz.Y > 500 then
                 d.Image = BLACKHOLE_ASSET
                 d.ImageTransparency = 0.35
@@ -255,7 +254,7 @@ local function cleanObs(obs)
             end
         end
 
-        -- Тексты — убираем повторы
+        -- Чистим текстовые повторы
         if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then
             local t = tostring(d.Text or "")
             if t:find("qmee2") or t:find("ssv") then
@@ -276,7 +275,7 @@ local function cleanObs(obs)
         end
     end
 
-    -- Фон главного окна — ставим чёрную дыру
+    -- Фон главного окна = новая картинка
     for _, c in ipairs(obs:GetChildren()) do
         if c:IsA("ImageLabel") then
             c.Image = BLACKHOLE_ASSET
@@ -287,7 +286,7 @@ local function cleanObs(obs)
     end
 end
 
--- Запускаем зачистку несколько раз
+-- Многократная зачистка (UI строится поэтапно)
 for _, delay in ipairs({2, 4, 6, 8, 12, 16, 22, 30}) do
     task.delay(delay, function()
         pcall(function()
@@ -326,9 +325,9 @@ task.spawn(function()
                                 local low = img:lower()
                                 local sz = d.AbsoluteSize
                                 if img:find("79685", 1, true) or low:find("moon") or low:find("luna") then
-                                    d.Image = ""
-                                    d.ImageTransparency = 1
-                                    d.Visible = false
+                                    d.Image = BLACKHOLE_ASSET
+                                    d.ImageTransparency = 0
+                                    d.Visible = true
                                 end
                                 if sz.X > 1000 or sz.Y > 500 then
                                     d.Image = BLACKHOLE_ASSET
@@ -345,7 +344,7 @@ task.spawn(function()
     end)
 end)
 
--- Звук → resonance
+-- Переименование звуков в resonance
 task.spawn(function()
     for _ = 1, 30 do
         task.wait(1)
@@ -363,71 +362,48 @@ end)
 if type(writefile) == "function" then
     pcall(writefile, "ssvRestart.lua", 'loadstring(game:HttpGet("' .. _uf .. '"))()')
 end
--- ═══════════════════════════════════════════════════════════════
---  ПОСТ-ОБРАБОТКА UI — убираем луну + ставим чёрную дыру
--- ═══════════════════════════════════════════════════════════════
 
--- Загружаем картинку чёрной дыры
-local BH_ASSET = nil
-if type(isfile) == "function" and type(getcustomasset) == "function" then
-    for _, n in ipairs({"blackhole.png", "blackhole.jpg", "blackhole.jpeg", "bg.png"}) do
-        if isfile(n) then
-            local ok, id = pcall(getcustomasset, n)
-            if ok and id then BH_ASSET = id break end
-        end
-    end
-end
-
-if BH_ASSET then
-    warn("[ssv] Фон: " .. BH_ASSET)
-else
-    warn("[ssv] blackhole.png не найден в workspace")
-end
+-- ═══════════════════════════════════════════════════════════════
+--  ПОСТ-ОБРАБОТКА UI — вторая волна (добиваем остатки)
+-- ═══════════════════════════════════════════════════════════════
+local BH_ASSET = BLACKHOLE_ASSET
 
 local function clean()
     pcall(function()
         local cg = game:GetService("CoreGui")
         for _, obs in ipairs(cg:GetDescendants()) do
             if obs.Name == "Obsidian" and (obs:IsA("ScreenGui") or obs:IsA("Folder")) then
-                -- 1. Скрываем луну везде
                 for _, d in ipairs(obs:GetDescendants()) do
                     if d:IsA("ImageLabel") or d:IsA("ImageButton") then
                         local img = tostring(d.Image or "")
                         local full = d:GetFullName()
                         local sz = d.AbsoluteSize
-                        
-                        -- Луна (asset 0 / пусто / 79685) — маленькие иконки
-                        if (img == "" or img == "rbxassetid://0" or img:find("79685", 1, true)) then
-                            if sz.X <= 40 and sz.Y <= 40 then
-                                d.Visible = false
-                                d.ImageTransparency = 1
-                            end
+
+                        -- Пустая / старая луна / 79685 — ставим новую
+                        if (img == "" or img == "rbxassetid://0" or img:find("79685", 1, true)
+                            or img:lower():find("moon") or img:lower():find("luna")) then
+                            d.Image = BH_ASSET
+                            d.ImageTransparency = 0
+                            d.Visible = true
                         end
-                        
-                        -- Явные луны по пути
-                        if full:find("Obsidian.Frame.TextLabel.ImageLabel", 1, true) 
+
+                        if full:find("Obsidian.Frame.TextLabel.ImageLabel", 1, true)
                            or full:find("Obsidian.Main.Frame.Frame.ImageLabel", 1, true) then
-                            d.Visible = false
-                            d.ImageTransparency = 1
+                            d.Image = BH_ASSET
+                            d.ImageTransparency = 0
+                            d.Visible = true
                         end
-                        
-                        -- 2. Большой фон — заменяем на чёрную дыру
+
+                        -- Большой фон
                         if sz.X > 1000 or sz.Y > 500 then
-                            if BH_ASSET then
-                                d.Image = BH_ASSET
-                                d.ImageTransparency = 0.4
-                                d.ScaleType = Enum.ScaleType.Crop
-                                d.Visible = true
-                                d.BackgroundTransparency = 1
-                            else
-                                d.Image = ""
-                                d.ImageTransparency = 1
-                                d.Visible = false
-                            end
+                            d.Image = BH_ASSET
+                            d.ImageTransparency = 0.4
+                            d.ScaleType = Enum.ScaleType.Crop
+                            d.Visible = true
+                            d.BackgroundTransparency = 1
                         end
                     end
-                    
-                    -- Тексты — убираем повторы qmee2/ssv
+
                     if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then
                         local t = tostring(d.Text or "")
                         if t:find("qmee2") or t:find("ssv") then
@@ -452,12 +428,10 @@ local function clean()
     end)
 end
 
--- Чистим много раз — UI строится поэтапно
 for _, delay in ipairs({2, 4, 6, 8, 12, 16, 22, 30}) do
     task.delay(delay, clean)
 end
 
--- Следим за новыми ImageLabel
 task.spawn(function()
     task.wait(3)
     pcall(function()
@@ -470,20 +444,17 @@ task.spawn(function()
                         pcall(function()
                             local img = tostring(d.Image or "")
                             local sz = d.AbsoluteSize
-                            if (img == "" or img == "rbxassetid://0" or img:find("79685", 1, true)) 
-                               and sz.X <= 40 and sz.Y <= 40 then
-                                d.Visible = false
-                                d.ImageTransparency = 1
+                            if (img == "" or img == "rbxassetid://0" or img:find("79685", 1, true)
+                                or img:lower():find("moon") or img:lower():find("luna")) then
+                                d.Image = BH_ASSET
+                                d.ImageTransparency = 0
+                                d.Visible = true
                             end
                             if sz.X > 1000 or sz.Y > 500 then
-                                if BH_ASSET then
-                                    d.Image = BH_ASSET
-                                    d.ImageTransparency = 0.4
-                                    d.ScaleType = Enum.ScaleType.Crop
-                                    d.Visible = true
-                                else
-                                    d.Visible = false
-                                end
+                                d.Image = BH_ASSET
+                                d.ImageTransparency = 0.4
+                                d.ScaleType = Enum.ScaleType.Crop
+                                d.Visible = true
                             end
                         end)
                     end
