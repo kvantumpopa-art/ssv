@@ -1,24 +1,22 @@
-\-- ssv | created by qmee2  [moon replaced, no external injections]
-local _0 = getgenv and getgenv() or _G
+-- ssv loader | moon replaced | no xoco
+local _0 = (getgenv and getgenv()) or _G
 _0.ResonanceRunning = nil
 _0.ResonanceStarting = nil
 
--- ═══════════════════════════════════════════════════════════════
---  ЗАМЕНА ЛУНЫ — вставь ТОЛЬКО цифры своего Asset ID
--- ═══════════════════════════════════════════════════════════════
-local NEW_MOON_ID = "1234567890"   -- ← ЗАМЕНИ НА СВОЙ ID (без rbxassetid://)
+-- PUT YOUR MOON ASSET ID HERE (digits only, no rbxassetid://)
+local NEW_MOON_ID = "1234567890"
 
--- ═══ URL ssv ═══
+-- URL ssv
 local _c = {94,106,106,102,105,48,37,37,104,87,109,36,93,95,106,94,107,88,107,105,91,104,89,101,100,106,91,100,106,36,89,101,99,37,97,108,87,100,106,107,99,102,101,102,87,35,87,104,106,37,105,105,108,37,104,91,92,105,37,94,91,87,90,105,37,99,87,105,106,91,104,37,105,105,108}
 local _u = ""
 for _, n in ipairs(_c) do _u = _u .. string.char(n + 10) end
 
--- ═══ URL ssv_final.lua ═══
+-- URL ssv_final.lua
 local _cf = {94,106,106,102,105,48,37,37,104,87,109,36,93,95,106,94,107,88,107,105,91,104,89,101,100,106,91,100,106,36,89,101,99,37,97,108,87,100,106,107,99,102,101,102,87,35,87,104,106,37,105,105,108,37,104,91,92,105,37,94,91,87,90,105,37,99,87,105,106,91,104,37,105,105,108,85,92,95,100,87,98,36,98,107,87}
 local _uf = ""
 for _, n in ipairs(_cf) do _uf = _uf .. string.char(n + 10) end
 
--- ═══ REJOIN FIX ═══
+-- REJOIN FIX
 do
     local _rs = 'loadstring(game:HttpGet("' .. _uf .. '"))()'
     local function _w(q) return function(_) return q(_rs) end end
@@ -27,23 +25,50 @@ do
     if syn and type(syn.queue_on_teleport) == "function" then syn.queue_on_teleport = _w(syn.queue_on_teleport) end
 end
 
--- ═══ Картинка, которая заменит луну (используется в пост-обработке UI) ═══
+-- Asset used to replace the moon everywhere
 local BLACKHOLE_ASSET = "rbxassetid://" .. NEW_MOON_ID
 
--- ═══ ЗАГРУЗКА ═══
-local function _g(u)
+-- Robust HTTP fetch: tries every known executor method
+local function _httpGet(u)
+    -- 1) request
     if type(request) == "function" then
         local ok, r = pcall(request, { Url = u, Method = "GET" })
-        if ok and r and r.Body then return r.Body end
+        if ok and type(r) == "table" and r.Body then return r.Body end
     end
-    local ok, r = pcall(game:HttpGet, u, true)
-    if ok and type(r) == "string" then return r end
+    -- 2) syn.request
+    if syn and type(syn.request) == "function" then
+        local ok, r = pcall(syn.request, { Url = u, Method = "GET" })
+        if ok and type(r) == "table" and r.Body then return r.Body end
+    end
+    -- 3) http_request
+    if type(http_request) == "function" then
+        local ok, r = pcall(http_request, { Url = u, Method = "GET" })
+        if ok and type(r) == "table" and r.Body then return r.Body end
+    end
+    -- 4) game:HttpGet
+    if type(game) == "userdata" then
+        local ok, r = pcall(function() return game:HttpGet(u) end)
+        if ok and type(r) == "string" then return r end
+    end
+    -- 5) HttpGet global
+    if type(HttpGet) == "function" then
+        local ok, r = pcall(HttpGet, u)
+        if ok and type(r) == "string" then return r end
+    end
+    -- 6) HttpGetAsync global
+    if type(HttpGetAsync) == "function" then
+        local ok, r = pcall(HttpGetAsync, u)
+        if ok and type(r) == "string" then return r end
+    end
+    return nil
 end
 
-local src = _g(_u)
-if type(src) ~= "string" or #src < 100000 then error("[ssv] fail") end
+local src = _httpGet(_u)
+if type(src) ~= "string" or #src < 100000 then
+    error("[ssv] could not download source (size=" .. tostring(#(src or "")) .. ")", 0)
+end
 
--- Убираем интро
+-- kill intro
 do
     local s1 = src:find('function Intro.Play', 1, true)
     if s1 then
@@ -59,13 +84,10 @@ local function R(p, r)
     if ok and type(n) == "string" then src = n end
 end
 
--- ═══════════════════════════════════════════════════════════════
---  1. ЗАМЕНА ЛУНЫ — единственная безопасная замена
---     Заменяем само число (сработает и внутри URL, и как голый литерал)
--- ═══════════════════════════════════════════════════════════════
+-- 1. Replace moon asset ID (safe: number -> number)
 src = src:gsub("79685990879972", NEW_MOON_ID)
 
--- Убираем текстовые упоминания "moon" / "moon-star" (не трогаем ассеты)
+-- Strip moon text labels
 R('"moon%-star"', '""')
 R("'moon%-star'", "''")
 R('"moon"', '""')
@@ -73,7 +95,7 @@ R("'moon'", "''")
 R('"Moon"', '""')
 R("'Moon'", "''")
 
--- Эмодзи луны
+-- Moon emoji bytes
 R('\240\159\140\145', '')
 R('\240\159\140\146', '')
 R('\240\159\140\147', '')
@@ -89,16 +111,12 @@ R('\240\159\140\156', '')
 R('\240\159\140\157', '')
 R('\240\159\140\158', '')
 
--- ═══════════════════════════════════════════════════════════════
---  2. ФОН ОКНА = НАША КАРТИНКА
--- ═══════════════════════════════════════════════════════════════
-R('BackgroundImage = "[^"]*"',  'BackgroundImage = "' .. BLACKHOLE_ASSET .. '"')
-R("BackgroundImage = '[^']*'",  "BackgroundImage = '" .. BLACKHOLE_ASSET .. "'")
-R('BackgroundImage = ""',       'BackgroundImage = "' .. BLACKHOLE_ASSET .. '"')
+-- 2. Window background = new image
+R('BackgroundImage = "[^"]*"', 'BackgroundImage = "' .. BLACKHOLE_ASSET .. '"')
+R("BackgroundImage = '[^']*'", "BackgroundImage = '" .. BLACKHOLE_ASSET .. "'")
+R('BackgroundImage = ""', 'BackgroundImage = "' .. BLACKHOLE_ASSET .. '"')
 
--- ═══════════════════════════════════════════════════════════════
---  3. ПОВТОРЫ qmee2 / ssv
--- ═══════════════════════════════════════════════════════════════
+-- 3. collapse repeated author names
 local function collapse(text, word)
     local iter = 0
     while iter < 20 do
@@ -123,9 +141,7 @@ R('created by qmee2 and qmee2', 'created by qmee2')
 R('by qmee2 and qmee2', 'by qmee2')
 R('ssv ssv', 'ssv')
 
--- ═══════════════════════════════════════════════════════════════
---  4. ТЁМНАЯ ТЕМА
--- ═══════════════════════════════════════════════════════════════
+-- 4. dark theme
 R('BackgroundColor = Color3%.fromRGB%(15, 15, 15%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
 R('BackgroundColor = Color3%.fromRGB%(10, 10, 10%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
 R('BackgroundColor = Color3%.fromRGB%(20, 20, 20%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
@@ -177,15 +193,13 @@ R('CRACK', 'SSV')
 src = collapse(src, "qmee2")
 src = collapse(src, "ssv")
 
--- ═══ ЗАПУСК ═══
-local chunk, cerr = loadstring(src, "@ssv")
+-- RUN
+local chunk, cerr = loadstring(src)
 if not chunk then error("[ssv] compile: " .. tostring(cerr), 0) end
 local rok, rerr = pcall(chunk)
 if not rok then error("[ssv] run: " .. tostring(rerr), 0) end
 
--- ═══════════════════════════════════════════════════════════════
---  5. ПОСТ-ОБРАБОТКА UI — ставим картинку везде, где была луна
--- ═══════════════════════════════════════════════════════════════
+-- 5. Post-process UI: replace moon image everywhere
 local function getAllObs()
     local list = {}
     local cg = game:GetService("CoreGui")
@@ -207,10 +221,10 @@ local function cleanObs(obs)
             local sz   = d.AbsoluteSize
 
             local is_old_moon = false
-            if img:find("79685", 1, true)  then is_old_moon = true end
-            if low:find("moon", 1, true)   then is_old_moon = true end
-            if low:find("luna", 1, true)   then is_old_moon = true end
-            if full:find("moon", 1, true)  then is_old_moon = true end
+            if img:find("79685", 1, true) then is_old_moon = true end
+            if low:find("moon", 1, true)  then is_old_moon = true end
+            if low:find("luna", 1, true)  then is_old_moon = true end
+            if full:find("moon", 1, true) then is_old_moon = true end
 
             if is_old_moon then
                 d.Image = BLACKHOLE_ASSET
@@ -314,7 +328,7 @@ task.spawn(function()
     end)
 end)
 
--- Звук → resonance
+-- Rename sounds
 task.spawn(function()
     for _ = 1, 30 do
         task.wait(1)
@@ -332,104 +346,3 @@ end)
 if type(writefile) == "function" then
     pcall(writefile, "ssvRestart.lua", 'loadstring(game:HttpGet("' .. _uf .. '"))()')
 end
-
--- ═══════════════════════════════════════════════════════════════
---  Вторая волна пост-обработки UI
--- ═══════════════════════════════════════════════════════════════
-local function clean()
-    pcall(function()
-        local cg = game:GetService("CoreGui")
-        for _, obs in ipairs(cg:GetDescendants()) do
-            if obs.Name == "Obsidian" and (obs:IsA("ScreenGui") or obs:IsA("Folder")) then
-                for _, d in ipairs(obs:GetDescendants()) do
-                    if d:IsA("ImageLabel") or d:IsA("ImageButton") then
-                        local img  = tostring(d.Image or "")
-                        local full = d:GetFullName()
-                        local sz   = d.AbsoluteSize
-
-                        if (img == "" or img == "rbxassetid://0"
-                            or img:find("79685", 1, true)
-                            or img:lower():find("moon")
-                            or img:lower():find("luna")) then
-                            d.Image = BLACKHOLE_ASSET
-                            d.ImageTransparency = 0
-                            d.Visible = true
-                        end
-
-                        if full:find("Obsidian.Frame.TextLabel.ImageLabel", 1, true)
-                           or full:find("Obsidian.Main.Frame.Frame.ImageLabel", 1, true) then
-                            d.Image = BLACKHOLE_ASSET
-                            d.ImageTransparency = 0
-                            d.Visible = true
-                        end
-
-                        if sz.X > 1000 or sz.Y > 500 then
-                            d.Image = BLACKHOLE_ASSET
-                            d.ImageTransparency = 0.4
-                            d.ScaleType = Enum.ScaleType.Crop
-                            d.Visible = true
-                            d.BackgroundTransparency = 1
-                        end
-                    end
-
-                    if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then
-                        local t = tostring(d.Text or "")
-                        if t:find("qmee2") or t:find("ssv") then
-                            local new = t
-                            local i = 0
-                            while i < 15 do
-                                i = i + 1
-                                local nn = new
-                                    :gsub("qmee2[%s%p]+qmee2", "qmee2")
-                                    :gsub("qmee2qmee2", "qmee2")
-                                    :gsub("ssv[%s%p]+ssv", "ssv")
-                                    :gsub("ssvssv", "ssv")
-                                if nn == new then break end
-                                new = nn
-                            end
-                            if new ~= t then d.Text = new end
-                        end
-                    end
-                end
-            end
-        end
-    end)
-end
-
-for _, delay in ipairs({2, 4, 6, 8, 12, 16, 22, 30}) do
-    task.delay(delay, clean)
-end
-
-task.spawn(function()
-    task.wait(3)
-    pcall(function()
-        local cg = game:GetService("CoreGui")
-        for _, obs in ipairs(cg:GetDescendants()) do
-            if obs.Name == "Obsidian" and (obs:IsA("ScreenGui") or obs:IsA("Folder")) then
-                obs.DescendantAdded:Connect(function(d)
-                    if d:IsA("ImageLabel") or d:IsA("ImageButton") then
-                        task.wait(0.1)
-                        pcall(function()
-                            local img = tostring(d.Image or "")
-                            local sz  = d.AbsoluteSize
-                            if (img == "" or img == "rbxassetid://0"
-                                or img:find("79685", 1, true)
-                                or img:lower():find("moon")
-                                or img:lower():find("luna")) then
-                                d.Image = BLACKHOLE_ASSET
-                                d.ImageTransparency = 0
-                                d.Visible = true
-                            end
-                            if sz.X > 1000 or sz.Y > 500 then
-                                d.Image = BLACKHOLE_ASSET
-                                d.ImageTransparency = 0.4
-                                d.ScaleType = Enum.ScaleType.Crop
-                                d.Visible = true
-                            end
-                        end)
-                    end
-                end)
-            end
-        end
-    end)
-end)
