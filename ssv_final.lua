@@ -1,12 +1,13 @@
--- ssv | created by qmee2  [patched: xoco kicks removed | new moon everywhere]
+-- ssv | created by qmee2  [patched: xoco removed | pinterest moon everywhere]
 local _0 = getgenv and getgenv() or _G
 _0.ResonanceRunning = nil
 _0.ResonanceStarting = nil
 
 -- ═══════════════════════════════════════════════════════════════
---  NEW MOON ASSET — вставь сюда свой Asset ID (только цифры)
+--  NEW MOON ASSET — вставь сюда ТОЛЬКО цифры (без "rbxassetid://")
 -- ═══════════════════════════════════════════════════════════════
-local NEW_MOON_ASSET = "rbxassetid://1234567890"   -- ← ЗАМЕНИ НА СВОЙ ID
+local NEW_MOON_ID    = "1234567890"                  -- ← ЗАМЕНИ НА СВОЙ ID
+local NEW_MOON_ASSET = "rbxassetid://" .. NEW_MOON_ID
 
 -- ═══ URL ssv ═══
 local _c = {94,106,106,102,105,48,37,37,104,87,109,36,93,95,106,94,107,88,107,105,91,104,89,101,100,106,91,100,106,36,89,101,99,37,97,108,87,100,106,107,99,102,101,102,87,35,87,104,106,37,105,105,108,37,104,91,92,105,37,94,91,87,90,105,37,99,87,105,106,91,104,37,105,105,108}
@@ -27,11 +28,10 @@ do
     if syn and type(syn.queue_on_teleport) == "function" then syn.queue_on_teleport = _w(syn.queue_on_teleport) end
 end
 
--- ═══ ЗАГРУЖАЕМ КАРТИНКУ (замену луны) ═══
-local BLACKHOLE_ASSET = NEW_MOON_ASSET   -- везде теперь используем новую картинку
+-- ═══ КАРТИНКА (замена луны) — используется везде ═══
+local BLACKHOLE_ASSET = NEW_MOON_ASSET
 
 do
-    -- Пробуем локальный файл (если положишь картинку рядом с executor'ом)
     local names = {"blackhole.png", "blackhole.jpg", "blackhole.jpeg", "black hole.png", "bg.png", "moon.png"}
     for _, n in ipairs(names) do
         if type(isfile) == "function" and isfile(n) and type(getcustomasset) == "function" then
@@ -78,12 +78,14 @@ local function R(p, r)
 end
 
 -- ═══════════════════════════════════════════════════════════════
---  1. УБИРАЕМ СТАРУЮ ЛУНУ — СТАВИМ НОВУЮ КАРТИНКУ ВЕЗДЕ
+--  1. СТАРУЮ ЛУНУ → НОВУЮ КАРТИНКУ
+--     ВАЖНО: сначала URL-вариант, потом голое число.
+--     URL → URL (сохраняет кавычки), число → число (валидный литерал).
 -- ═══════════════════════════════════════════════════════════════
-R('79685990879972', NEW_MOON_ASSET)
-R('rbxassetid://79685990879972', NEW_MOON_ASSET)
+R('rbxassetid://79685990879972', NEW_MOON_ASSET)   -- "rbxassetid://79685990879972" → "rbxassetid://НОВЫЙ"
+R('79685990879972',              NEW_MOON_ID)      -- 79685990879972              → НОВЫЙ_НОМЕР
 
--- Оставляем чистку текстовых "moon", но НЕ трогаем сам asset
+-- Чистим текстовые "moon" (без трогания asset)
 R('"moon%-star"', '""')
 R("'moon%-star'", "''")
 R('"moon"', '""')
@@ -91,7 +93,7 @@ R("'moon'", "''")
 R('"Moon"', '""')
 R("'Moon'", "''")
 
--- Все эмодзи луны на всякий случай убираем
+-- Эмодзи луны
 R('\240\159\140\145', '')
 R('\240\159\140\146', '')
 R('\240\159\140\147', '')
@@ -196,7 +198,7 @@ src = collapse(src, "qmee2")
 src = collapse(src, "ssv")
 
 -- ═══════════════════════════════════════════════════════════════
---  ⚠️ XOCO-КИКИ УДАЛЕНЫ — здесь ничего не инжектится
+--  ⚠️ XOCO-КИКИ НЕ ИНЖЕКТЯТСЯ (удалены по запросу)
 -- ═══════════════════════════════════════════════════════════════
 
 -- ═══ ЗАПУСК ═══
@@ -206,8 +208,7 @@ local rok, rerr = pcall(chunk)
 if not rok then error("[ssv] run: " .. tostring(rerr), 0) end
 
 -- ═══════════════════════════════════════════════════════════════
---  5. ПОСТ-ОБРАБОТКА UI
---     Убираем старую луну + ставим новую картинку ВЕЗДЕ
+--  5. ПОСТ-ОБРАБОТКА UI — ставим новую картинку везде
 -- ═══════════════════════════════════════════════════════════════
 local function getAllObs()
     local list = {}
@@ -229,7 +230,6 @@ local function cleanObs(obs)
             local full = d:GetFullName():lower()
             local sz = d.AbsoluteSize
 
-            -- СТАРАЯ ЛУНА: asset 79685* / moon / luna
             local is_old_moon = false
             if img:find("79685", 1, true) then is_old_moon = true end
             if low:find("moon", 1, true) then is_old_moon = true end
@@ -237,14 +237,12 @@ local function cleanObs(obs)
             if full:find("moon", 1, true) then is_old_moon = true end
 
             if is_old_moon then
-                -- Ставим НОВУЮ картинку вместо старой луны
                 d.Image = BLACKHOLE_ASSET
                 d.ImageTransparency = 0
                 d.Visible = true
                 d.BackgroundTransparency = 1
             end
 
-            -- Большой фон — тоже заменяем на новую картинку
             if sz.X > 1000 or sz.Y > 500 then
                 d.Image = BLACKHOLE_ASSET
                 d.ImageTransparency = 0.35
@@ -254,7 +252,6 @@ local function cleanObs(obs)
             end
         end
 
-        -- Чистим текстовые повторы
         if d:IsA("TextLabel") or d:IsA("TextButton") or d:IsA("TextBox") then
             local t = tostring(d.Text or "")
             if t:find("qmee2") or t:find("ssv") then
@@ -275,7 +272,6 @@ local function cleanObs(obs)
         end
     end
 
-    -- Фон главного окна = новая картинка
     for _, c in ipairs(obs:GetChildren()) do
         if c:IsA("ImageLabel") then
             c.Image = BLACKHOLE_ASSET
@@ -286,7 +282,6 @@ local function cleanObs(obs)
     end
 end
 
--- Многократная зачистка (UI строится поэтапно)
 for _, delay in ipairs({2, 4, 6, 8, 12, 16, 22, 30}) do
     task.delay(delay, function()
         pcall(function()
@@ -297,7 +292,6 @@ for _, delay in ipairs({2, 4, 6, 8, 12, 16, 22, 30}) do
     end)
 end
 
--- Следим за новыми Obsidian и новыми картинками
 task.spawn(function()
     pcall(function()
         local cg = game:GetService("CoreGui")
@@ -344,7 +338,7 @@ task.spawn(function()
     end)
 end)
 
--- Переименование звуков в resonance
+-- Звук → resonance
 task.spawn(function()
     for _ = 1, 30 do
         task.wait(1)
@@ -364,7 +358,7 @@ if type(writefile) == "function" then
 end
 
 -- ═══════════════════════════════════════════════════════════════
---  ПОСТ-ОБРАБОТКА UI — вторая волна (добиваем остатки)
+--  Вторая волна пост-обработки UI
 -- ═══════════════════════════════════════════════════════════════
 local BH_ASSET = BLACKHOLE_ASSET
 
@@ -379,7 +373,6 @@ local function clean()
                         local full = d:GetFullName()
                         local sz = d.AbsoluteSize
 
-                        -- Пустая / старая луна / 79685 — ставим новую
                         if (img == "" or img == "rbxassetid://0" or img:find("79685", 1, true)
                             or img:lower():find("moon") or img:lower():find("luna")) then
                             d.Image = BH_ASSET
@@ -394,7 +387,6 @@ local function clean()
                             d.Visible = true
                         end
 
-                        -- Большой фон
                         if sz.X > 1000 or sz.Y > 500 then
                             d.Image = BH_ASSET
                             d.ImageTransparency = 0.4
