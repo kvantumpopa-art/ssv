@@ -1,13 +1,12 @@
--- ssv | created by qmee2  [patched: xoco removed | pinterest moon everywhere]
+\-- ssv | created by qmee2  [moon replaced, no external injections]
 local _0 = getgenv and getgenv() or _G
 _0.ResonanceRunning = nil
 _0.ResonanceStarting = nil
 
 -- ═══════════════════════════════════════════════════════════════
---  NEW MOON ASSET — вставь сюда ТОЛЬКО цифры (без "rbxassetid://")
+--  ЗАМЕНА ЛУНЫ — вставь ТОЛЬКО цифры своего Asset ID
 -- ═══════════════════════════════════════════════════════════════
-local NEW_MOON_ID    = "1234567890"                  -- ← ЗАМЕНИ НА СВОЙ ID
-local NEW_MOON_ASSET = "rbxassetid://" .. NEW_MOON_ID
+local NEW_MOON_ID = "1234567890"   -- ← ЗАМЕНИ НА СВОЙ ID (без rbxassetid://)
 
 -- ═══ URL ssv ═══
 local _c = {94,106,106,102,105,48,37,37,104,87,109,36,93,95,106,94,107,88,107,105,91,104,89,101,100,106,91,100,106,36,89,101,99,37,97,108,87,100,106,107,99,102,101,102,87,35,87,104,106,37,105,105,108,37,104,91,92,105,37,94,91,87,90,105,37,99,87,105,106,91,104,37,105,105,108}
@@ -28,25 +27,8 @@ do
     if syn and type(syn.queue_on_teleport) == "function" then syn.queue_on_teleport = _w(syn.queue_on_teleport) end
 end
 
--- ═══ КАРТИНКА (замена луны) — используется везде ═══
-local BLACKHOLE_ASSET = NEW_MOON_ASSET
-
-do
-    local names = {"blackhole.png", "blackhole.jpg", "blackhole.jpeg", "black hole.png", "bg.png", "moon.png"}
-    for _, n in ipairs(names) do
-        if type(isfile) == "function" and isfile(n) and type(getcustomasset) == "function" then
-            local ok, id = pcall(getcustomasset, n)
-            if ok and id then
-                BLACKHOLE_ASSET = id
-                print("[ssv] ✓ Локальная картинка: " .. n .. " → " .. tostring(id))
-                break
-            end
-        end
-    end
-    if BLACKHOLE_ASSET == NEW_MOON_ASSET then
-        print("[ssv] Используется Roblox Asset: " .. NEW_MOON_ASSET)
-    end
-end
+-- ═══ Картинка, которая заменит луну (используется в пост-обработке UI) ═══
+local BLACKHOLE_ASSET = "rbxassetid://" .. NEW_MOON_ID
 
 -- ═══ ЗАГРУЗКА ═══
 local function _g(u)
@@ -54,7 +36,7 @@ local function _g(u)
         local ok, r = pcall(request, { Url = u, Method = "GET" })
         if ok and r and r.Body then return r.Body end
     end
-    local ok, r = pcall(game.HttpGet, game, u, true)
+    local ok, r = pcall(game:HttpGet, u, true)
     if ok and type(r) == "string" then return r end
 end
 
@@ -78,14 +60,12 @@ local function R(p, r)
 end
 
 -- ═══════════════════════════════════════════════════════════════
---  1. СТАРУЮ ЛУНУ → НОВУЮ КАРТИНКУ
---     ВАЖНО: сначала URL-вариант, потом голое число.
---     URL → URL (сохраняет кавычки), число → число (валидный литерал).
+--  1. ЗАМЕНА ЛУНЫ — единственная безопасная замена
+--     Заменяем само число (сработает и внутри URL, и как голый литерал)
 -- ═══════════════════════════════════════════════════════════════
-R('rbxassetid://79685990879972', NEW_MOON_ASSET)   -- "rbxassetid://79685990879972" → "rbxassetid://НОВЫЙ"
-R('79685990879972',              NEW_MOON_ID)      -- 79685990879972              → НОВЫЙ_НОМЕР
+src = src:gsub("79685990879972", NEW_MOON_ID)
 
--- Чистим текстовые "moon" (без трогания asset)
+-- Убираем текстовые упоминания "moon" / "moon-star" (не трогаем ассеты)
 R('"moon%-star"', '""')
 R("'moon%-star'", "''")
 R('"moon"', '""')
@@ -110,11 +90,11 @@ R('\240\159\140\157', '')
 R('\240\159\140\158', '')
 
 -- ═══════════════════════════════════════════════════════════════
---  2. ФОН ОКНА = НОВАЯ КАРТИНКА
+--  2. ФОН ОКНА = НАША КАРТИНКА
 -- ═══════════════════════════════════════════════════════════════
-R('BackgroundImage = "[^"]*"', 'BackgroundImage = "' .. BLACKHOLE_ASSET .. '"')
-R("BackgroundImage = '[^']*'", "BackgroundImage = '" .. BLACKHOLE_ASSET .. "'")
-R('BackgroundImage = ""', 'BackgroundImage = "' .. BLACKHOLE_ASSET .. '"')
+R('BackgroundImage = "[^"]*"',  'BackgroundImage = "' .. BLACKHOLE_ASSET .. '"')
+R("BackgroundImage = '[^']*'",  "BackgroundImage = '" .. BLACKHOLE_ASSET .. "'")
+R('BackgroundImage = ""',       'BackgroundImage = "' .. BLACKHOLE_ASSET .. '"')
 
 -- ═══════════════════════════════════════════════════════════════
 --  3. ПОВТОРЫ qmee2 / ssv
@@ -144,7 +124,7 @@ R('by qmee2 and qmee2', 'by qmee2')
 R('ssv ssv', 'ssv')
 
 -- ═══════════════════════════════════════════════════════════════
---  4. ТЁМНАЯ ТЕМА ПОД НОВУЮ КАРТИНКУ
+--  4. ТЁМНАЯ ТЕМА
 -- ═══════════════════════════════════════════════════════════════
 R('BackgroundColor = Color3%.fromRGB%(15, 15, 15%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
 R('BackgroundColor = Color3%.fromRGB%(10, 10, 10%)', 'BackgroundColor = Color3.fromRGB(0, 0, 0)')
@@ -197,10 +177,6 @@ R('CRACK', 'SSV')
 src = collapse(src, "qmee2")
 src = collapse(src, "ssv")
 
--- ═══════════════════════════════════════════════════════════════
---  ⚠️ XOCO-КИКИ НЕ ИНЖЕКТЯТСЯ (удалены по запросу)
--- ═══════════════════════════════════════════════════════════════
-
 -- ═══ ЗАПУСК ═══
 local chunk, cerr = loadstring(src, "@ssv")
 if not chunk then error("[ssv] compile: " .. tostring(cerr), 0) end
@@ -208,7 +184,7 @@ local rok, rerr = pcall(chunk)
 if not rok then error("[ssv] run: " .. tostring(rerr), 0) end
 
 -- ═══════════════════════════════════════════════════════════════
---  5. ПОСТ-ОБРАБОТКА UI — ставим новую картинку везде
+--  5. ПОСТ-ОБРАБОТКА UI — ставим картинку везде, где была луна
 -- ═══════════════════════════════════════════════════════════════
 local function getAllObs()
     local list = {}
@@ -225,16 +201,16 @@ local function cleanObs(obs)
     if not obs then return end
     for _, d in ipairs(obs:GetDescendants()) do
         if d:IsA("ImageLabel") or d:IsA("ImageButton") then
-            local img = tostring(d.Image or "")
-            local low = img:lower()
+            local img  = tostring(d.Image or "")
+            local low  = img:lower()
             local full = d:GetFullName():lower()
-            local sz = d.AbsoluteSize
+            local sz   = d.AbsoluteSize
 
             local is_old_moon = false
-            if img:find("79685", 1, true) then is_old_moon = true end
-            if low:find("moon", 1, true) then is_old_moon = true end
-            if low:find("luna", 1, true) then is_old_moon = true end
-            if full:find("moon", 1, true) then is_old_moon = true end
+            if img:find("79685", 1, true)  then is_old_moon = true end
+            if low:find("moon", 1, true)   then is_old_moon = true end
+            if low:find("luna", 1, true)   then is_old_moon = true end
+            if full:find("moon", 1, true)  then is_old_moon = true end
 
             if is_old_moon then
                 d.Image = BLACKHOLE_ASSET
@@ -317,7 +293,7 @@ task.spawn(function()
                             pcall(function()
                                 local img = tostring(d.Image or "")
                                 local low = img:lower()
-                                local sz = d.AbsoluteSize
+                                local sz  = d.AbsoluteSize
                                 if img:find("79685", 1, true) or low:find("moon") or low:find("luna") then
                                     d.Image = BLACKHOLE_ASSET
                                     d.ImageTransparency = 0
@@ -360,8 +336,6 @@ end
 -- ═══════════════════════════════════════════════════════════════
 --  Вторая волна пост-обработки UI
 -- ═══════════════════════════════════════════════════════════════
-local BH_ASSET = BLACKHOLE_ASSET
-
 local function clean()
     pcall(function()
         local cg = game:GetService("CoreGui")
@@ -369,26 +343,28 @@ local function clean()
             if obs.Name == "Obsidian" and (obs:IsA("ScreenGui") or obs:IsA("Folder")) then
                 for _, d in ipairs(obs:GetDescendants()) do
                     if d:IsA("ImageLabel") or d:IsA("ImageButton") then
-                        local img = tostring(d.Image or "")
+                        local img  = tostring(d.Image or "")
                         local full = d:GetFullName()
-                        local sz = d.AbsoluteSize
+                        local sz   = d.AbsoluteSize
 
-                        if (img == "" or img == "rbxassetid://0" or img:find("79685", 1, true)
-                            or img:lower():find("moon") or img:lower():find("luna")) then
-                            d.Image = BH_ASSET
+                        if (img == "" or img == "rbxassetid://0"
+                            or img:find("79685", 1, true)
+                            or img:lower():find("moon")
+                            or img:lower():find("luna")) then
+                            d.Image = BLACKHOLE_ASSET
                             d.ImageTransparency = 0
                             d.Visible = true
                         end
 
                         if full:find("Obsidian.Frame.TextLabel.ImageLabel", 1, true)
                            or full:find("Obsidian.Main.Frame.Frame.ImageLabel", 1, true) then
-                            d.Image = BH_ASSET
+                            d.Image = BLACKHOLE_ASSET
                             d.ImageTransparency = 0
                             d.Visible = true
                         end
 
                         if sz.X > 1000 or sz.Y > 500 then
-                            d.Image = BH_ASSET
+                            d.Image = BLACKHOLE_ASSET
                             d.ImageTransparency = 0.4
                             d.ScaleType = Enum.ScaleType.Crop
                             d.Visible = true
@@ -435,15 +411,17 @@ task.spawn(function()
                         task.wait(0.1)
                         pcall(function()
                             local img = tostring(d.Image or "")
-                            local sz = d.AbsoluteSize
-                            if (img == "" or img == "rbxassetid://0" or img:find("79685", 1, true)
-                                or img:lower():find("moon") or img:lower():find("luna")) then
-                                d.Image = BH_ASSET
+                            local sz  = d.AbsoluteSize
+                            if (img == "" or img == "rbxassetid://0"
+                                or img:find("79685", 1, true)
+                                or img:lower():find("moon")
+                                or img:lower():find("luna")) then
+                                d.Image = BLACKHOLE_ASSET
                                 d.ImageTransparency = 0
                                 d.Visible = true
                             end
                             if sz.X > 1000 or sz.Y > 500 then
-                                d.Image = BH_ASSET
+                                d.Image = BLACKHOLE_ASSET
                                 d.ImageTransparency = 0.4
                                 d.ScaleType = Enum.ScaleType.Crop
                                 d.Visible = true
